@@ -7,7 +7,7 @@ name: master_catch 変更後の派生CSV再生成 / Emit derived CSVs after mast
 #            fishing_integrated）を areas/<area_id>/data/derived/all/ に再生成
 #   Step C : 変更を [skip ci] 付きで commit & push
 #
-# 既存 fishing-system の sync_after_master_push.yml (W6-2/W6-3) を Mroto
+# 既存 fishing-system の sync_after_master_push.yml (W6-2/W6-3) を Muroto
 # 構造（areas/*/data/master_catch.csv + shared/weather + shared/current）に
 # 適合化したもの。Step A は将来追加予定、当面は Step B のみ実行。
 
@@ -89,7 +89,7 @@ jobs:
           if git diff --staged --quiet; then
             echo "派生CSVに変更なし。"
           else
-            git commit -m "emit派生CSV再生成 (Mroto): $(date -u +%Y-%m-%dT%H:%M:%SZ) [skip ci]"
+            git commit -m "emit派生CSV再生成 (Muroto): $(date -u +%Y-%m-%dT%H:%M:%SZ) [skip ci]"
             git push
             echo "コミット＆プッシュ完了"
           fi

@@ -41,7 +41,7 @@ from .csv_writer import write_csv_bom_crlf, read_csv_bom_crlf_as_dicts
 from .emit_fishing_muroto_v1 import _load_c3_index, C3_COLUMNS
 
 
-# 36列ヘッダ（W3-3 §3.3.2 基本 + Mroto 拡張2列 boat_id/area_id を末尾追加）
+# 36列ヘッダ（W3-3 §3.3.2 基本 + Muroto 拡張2列 boat_id/area_id を末尾追加）
 INTEGRATED_COLUMNS = FISHING_DATA_COLUMNS + [
     "気温_平均", "気温_最高", "気温_最低",
     "風速_最大", "風向_計測",
@@ -81,7 +81,7 @@ def build_row(master_rec: dict, c3_index: dict) -> list:
         g("月齢"), g("月相"),
     ])
 
-    # Mroto 拡張: boat_id, area_id を末尾に追加
+    # Muroto 拡張: boat_id, area_id を末尾に追加
     out.extend([
         master_rec.get("boat_id", ""),
         master_rec.get("area_id", ""),

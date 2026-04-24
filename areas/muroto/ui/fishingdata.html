@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>室戸沖 室戸1 統合釣果データベース</title>
+<title>室戸沖 釣果データベース</title>
 <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 <link rel="alternate icon" href="./favicon.ico">
 <style>
@@ -137,9 +137,10 @@ td.env-td{background:var(--env-bg);color:#0a4a57;}
   </div>
   <div class="fs-nav-group fs-nav-group-shared" data-group="shared">
     <span class="fs-nav-label">公開系</span>
-    <a href="./fishingdata.html"             data-fs="fishingdata">統合釣果DB</a>
-    <a href="./muroto_offshore_current.html" data-fs="muroto_current">潮流</a>
-    <a href="./muroto_fishing_analysis.html" data-fs="muroto_analysis">解析</a>
+    <a href="../../../viewer.html" data-fs="viewer" onclick="this.href='../../../viewer.html'+(location.search||'')">🎣 遊漁船情報</a>
+    <a href="./fishingdata.html"             data-fs="fishingdata">釣果DB</a>
+    <a href="./muroto_fishing_analysis.html" data-fs="muroto_analysis">解析DB</a>
+    <a href="./muroto_offshore_current.html" data-fs="muroto_current">潮流DB</a>
     <a href="./muroto_fishingforecast.html"  data-fs="muroto_forecast">出船判断</a>
   </div>
 </nav>
@@ -166,7 +167,7 @@ html.fs-reveal-private .fs-nav-group-private{display:flex}
 <!-- ヘッダー -->
 <div class="header">
   <span class="header-icon">🐟</span>
-  <div class="header-title">室戸沖 室戸1 統合釣果データベース</div>
+  <div class="header-title">室戸沖 釣果データベース</div>
 </div>
 
 <div id="loading-msg">📡 データを読み込み中...</div>
@@ -355,7 +356,7 @@ async function loadCSV(){
       return obj;
     });
 
-    // Mroto 拡張: ?boats=muroto1,muroto2 クエリで遊漁船フィルタ
+    // Muroto 拡張: ?boats=muroto1,muroto2 クエリで遊漁船フィルタ
     const qsBoats = new URLSearchParams(window.location.search).get('boats');
     if (qsBoats) {
       const boatSet = new Set(qsBoats.split(',').map(s => s.trim()).filter(Boolean));

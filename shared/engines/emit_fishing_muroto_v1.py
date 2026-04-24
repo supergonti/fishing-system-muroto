@@ -42,7 +42,7 @@ from ._schema import FISHING_DATA_COLUMNS, MASTER_COLUMNS, restore_source_case
 from .csv_writer import write_csv_bom_crlf, read_csv_bom_crlf_as_dicts
 
 
-# 44列ヘッダ（W3-3 §3.2.2 基本42列 + Mroto 拡張2列 boat_id/area_id）
+# 44列ヘッダ（W3-3 §3.2.2 基本42列 + Muroto 拡張2列 boat_id/area_id）
 MUROTO_V1_COLUMNS = FISHING_DATA_COLUMNS + [
     "潮汐", "月齢", "月相",
     "室戸沖_流速kn", "室戸沖_流向", "室戸沖_水温", "室戸沖_塩分",
@@ -156,7 +156,7 @@ def build_row(master_rec: dict, c3_index: dict, c4_index: dict) -> list:
         g3("最大波高"), g3("波向"), g3("波周期"),
     ])
 
-    # Mroto 拡張: boat_id, area_id を末尾に追加（42→44列、後方互換）
+    # Muroto 拡張: boat_id, area_id を末尾に追加（42→44列、後方互換）
     out.extend([
         master_rec.get("boat_id", ""),
         master_rec.get("area_id", ""),

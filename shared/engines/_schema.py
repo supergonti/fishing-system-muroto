@@ -1,5 +1,5 @@
 """
-engines/_schema.py — Aマスター 28列スキーマの定義（Mroto 拡張版）
+engines/_schema.py — Aマスター 28列スキーマの定義（Muroto 拡張版）
 
 設計準拠:
   既存 26列スキーマ（設計_W2-1_Aグループ_20260417.md §2.1）に
@@ -42,8 +42,8 @@ MASTER_COLUMNS = [
     "source_detail",    # 24
     "prompt_version",   # 25
     "confidence",       # 26
-    "boat_id",          # 27 必須 (Mroto 拡張: どの遊漁船か)
-    "area_id",          # 28 必須 (Mroto 拡張: どの海域か)
+    "boat_id",          # 27 必須 (Muroto 拡張: どの遊漁船か)
+    "area_id",          # 28 必須 (Muroto 拡張: どの海域か)
 ]
 
 # 旧26列（後方互換読込用）
@@ -113,7 +113,7 @@ def detect_master_schema(header: list) -> str:
     """master_catch.csv のヘッダから schema version を検出。
 
     Returns:
-      '2.0.0' (28列 Mroto 拡張) / '1.0.0' (既存26列) / 'unknown'
+      '2.0.0' (28列 Muroto 拡張) / '1.0.0' (既存26列) / 'unknown'
     """
     if header == MASTER_COLUMNS:
         return "2.0.0"

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>遊漁船 釣果ビューア — 海域・船選択</title>
+<title>遊漁船情報選択 — 海域・船選択</title>
 <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 <style>
   :root{
@@ -50,8 +50,8 @@
 <body>
 
 <header>
-  <h1>🎣 遊漁船 釣果ビューア</h1>
-  <div class="sub">海域 → 船を選択 → 統合釣果・釣果解析・海流・出船判断を閲覧</div>
+  <h1>🎣 遊漁船情報選択</h1>
+  <div class="sub">海域 → 船を選択 → 釣果DB・解析DB・潮流DB・出船判断 を閲覧</div>
 </header>
 
 <main>
@@ -79,15 +79,15 @@
     <div class="help">現在の船選択（<code id="current-query">?boats=...</code>）をクエリ付きで渡します。</div>
     <div class="nav-grid">
       <a class="nav-card" id="nav-fishingdata" href="#">
-        <div class="title">📊 統合釣果<span class="tag">船フィルタ対応</span></div>
+        <div class="title">📊 釣果DB<span class="tag">船フィルタ対応</span></div>
         <div class="desc">釣果 + 気象（気温・風・波・天気）を横断検索。魚種・釣り場・日付で絞り込み。</div>
       </a>
       <a class="nav-card" id="nav-analysis" href="#">
-        <div class="title">🔬 釣果解析<span class="tag">船フィルタ対応</span></div>
+        <div class="title">🔬 解析DB<span class="tag">船フィルタ対応</span></div>
         <div class="desc">月別魚種別の漁獲パターン、条件別の釣果傾向を可視化。</div>
       </a>
       <a class="nav-card" id="nav-current" href="#">
-        <div class="title">🌊 海域海流</div>
+        <div class="title">🌊 潮流DB</div>
         <div class="desc">海域5ポイント（北西・西・室戸沖・東・北東）の海流・水温・塩分。船選択に依存しない海域共通データ。</div>
       </a>
       <a class="nav-card" id="nav-forecast" href="#">
@@ -99,7 +99,7 @@
 
 </main>
 
-<footer>fishing-system Mroto — 複数遊漁船・複数海域対応版</footer>
+<footer>fishing-system Muroto — 複数遊漁船・複数海域対応版</footer>
 
 <script>
 // ───────── 状態 ─────────

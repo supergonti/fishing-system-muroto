@@ -553,7 +553,7 @@ def update_embedded_analysis_data(html_path, result_obj):
 
 # ─── メイン ───────────────────────────────────────────────
 def main():
-    # Mroto 拡張: CLI 引数でパスを上書き可能にする。引数なしの場合は従来通り
+    # Muroto 拡張: CLI 引数でパスを上書き可能にする。引数なしの場合は従来通り
     # base = scripts/ の親（リポジトリルート）を基点にした相対パスを使う。
     parser = argparse.ArgumentParser(description="釣果データ解析エンジン")
     parser.add_argument("--db1", default=None, help="DB① fishing_muroto_v1.csv のパス")

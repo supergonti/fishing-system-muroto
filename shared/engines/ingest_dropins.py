@@ -47,8 +47,8 @@ from .csv_writer import write_csv_bom_crlf, read_csv_bom_crlf_as_dicts
 
 JST = timezone(timedelta(hours=9))
 
-# uuid5 名前空間（Mroto システム固有、バイト一致の再現性担保）
-NAMESPACE_SEED = "fishing-system-mroto:ingest_dropins:v2.0.0"
+# uuid5 名前空間（Muroto システム固有、バイト一致の再現性担保）
+NAMESPACE_SEED = "fishing-system-muroto:ingest_dropins:v2.0.0"
 NAMESPACE_UUID = uuid.uuid5(uuid.NAMESPACE_URL, NAMESPACE_SEED)
 
 # ファイル名規約: fishing_data_<boat_id>.csv
