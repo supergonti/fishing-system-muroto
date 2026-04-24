@@ -1,0 +1,91 @@
+{
+  "current_points": [
+    {
+      "lat": 33.213852,
+      "lng": 134.078931,
+      "name": "北西",
+      "sea_area": "室戸沖",
+      "updated_on": "2026-04-15"
+    },
+    {
+      "lat": 33.102084,
+      "lng": 134.078931,
+      "name": "西",
+      "sea_area": "室戸沖",
+      "updated_on": "2026-04-15"
+    },
+    {
+      "lat": 33.102084,
+      "lng": 134.184056,
+      "name": "室戸沖",
+      "sea_area": "室戸沖",
+      "updated_on": "2026-04-15"
+    },
+    {
+      "lat": 33.102084,
+      "lng": 134.246407,
+      "name": "東",
+      "sea_area": "室戸沖",
+      "updated_on": "2026-04-15"
+    },
+    {
+      "lat": 33.213852,
+      "lng": 134.246407,
+      "name": "北東",
+      "sea_area": "室戸沖",
+      "updated_on": "2026-04-15"
+    }
+  ],
+  "updated_at": "2026-04-21T00:00:00+09:00",
+  "version": "2.1.0",
+  "weather_stations": [
+    {
+      "lat": 33.29,
+      "lng": 134.18,
+      "name": "室戸",
+      "prefecture": "高知"
+    },
+    {
+      "lat": 33.56,
+      "lng": 133.54,
+      "name": "高知",
+      "prefecture": "高知"
+    },
+    {
+      "lat": 32.72,
+      "lng": 132.72,
+      "name": "足摺",
+      "prefecture": "高知"
+    },
+    {
+      "lat": 33.22,
+      "lng": 132.56,
+      "name": "宇和島",
+      "prefecture": "愛媛"
+    },
+    {
+      "lat": 33.84,
+      "lng": 132.77,
+      "name": "松山",
+      "prefecture": "愛媛"
+    },
+    {
+      "lat": 34.12,
+      "lng": 132.99,
+      "name": "来島",
+      "prefecture": "愛媛"
+    },
+    {
+      "lat": 34.35,
+      "lng": 134.05,
+      "name": "高松",
+      "prefecture": "香川"
+    },
+    {
+      "lat": 33.92,
+      "lng": 134.66,
+      "name": "阿南",
+      "prefecture": "徳島"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "version": "1.0.0",
+  "updated_at": "2026-04-24T22:00:00+09:00",
+  "description": "source 値から boat_id を推論するためのマップ。ingest_dropins が filename から boat_id を抽出できない場合のフォールバック。",
+  "source_to_boat_id": {
+    "manual": "muroto1",
+    "instagram": "muroto1",
+    "Manual": "muroto1",
+    "Instagram": "muroto1",
+    "室戸2ブログ": "muroto2",
+    "室戸3ブログ": "muroto3"
+  },
+  "normalizers": {
+    "manual": "normalize_manual",
+    "instagram": "normalize_instagram",
+    "室戸2ブログ": "normalize_blog",
+    "室戸3ブログ": "normalize_blog"
+  }
+}

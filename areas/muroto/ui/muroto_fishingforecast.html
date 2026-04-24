@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="室戸岬沖への遊漁船出船可否を波高・風向・風波など6ファクターで自動判定。Open-Meteo APIによる5日間予報。">
+<title>室戸沖 出船判断システム | 室戸岬沖 遊漁船予報</title>
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="alternate icon" href="./favicon.ico">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Helvetica Neue',Arial,'Hiragino Kaku Gothic ProN',sans-serif;background:#f5f7fa;color:#1a1a2e;min-height:100vh}
+.hd{background:#fff;border-bottom:1px solid #e0e4ea;padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}
+.hd-title{font-size:16px;font-weight:700}
+.hd-sub{font-size:11px;color:#666;margin-top:1px}
+.hd-badge{margin-left:auto;display:flex;align-items:center;gap:8px}
+.hd-ver{font-size:10px;background:#1a1a2e;color:#fff;padding:3px 8px;border-radius:4px;font-weight:600}
+.hd-coord{font-size:11px;font-family:monospace;color:#444;background:#f0f2f5;padding:4px 9px;border-radius:6px;border:1px solid #e0e4ea}
+.wrap{max-width:960px;margin:0 auto;padding:20px 16px 60px}
+.ctrl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.btn-run{font-size:13px;font-weight:600;padding:9px 20px;border-radius:8px;border:none;background:#0066cc;color:#fff;cursor:pointer;transition:background .2s}
+.btn-run:hover{background:#0055aa}
+.btn-run:disabled{opacity:.45;cursor:not-allowed}
+.btn-csv{font-size:12px;padding:8px 14px;border-radius:8px;border:1px solid #ccd0d8;background:#fff;color:#444;cursor:pointer;display:none}
+.btn-csv:hover{background:#f5f7fa}
+.status{font-size:12px;color:#666;font-family:monospace}
+.logic-panel{background:#fff;border:1px solid #e0e4ea;border-radius:12px;padding:14px 16px;margin-bottom:16px}
+.logic-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media(max-width:600px){.logic-grid{grid-template-columns:1fr 1fr}}
+.lf{background:#f5f7fa;border-radius:8px;padding:9px 11px;border:1px solid #e8eaee}
+.lf-name{font-size:10px;color:#888;font-weight:600;margin-bottom:4px}
+.lf-desc{font-size:11px;color:#444;line-height:1.5}
+.lf-warn{background:#fff8e0;border-color:#f0d060}
+.lf-good{background:#e8f8e8;border-color:#90d090}
+.lf-danger{background:#fff0f0;border-color:#f0a0a0}
+.tbl-wrap{background:#fff;border:1px solid #e0e4ea;border-radius:12px;overflow:hidden;margin-bottom:16px}
+.tbl-head{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #e0e4ea;background:#fafbfc}
+.tbl-head h2{font-size:13px;font-weight:600;color:#444}
+.tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{min-width:520px;border-collapse:collapse;font-size:12px}
+thead th{padding:7px 8px;text-align:left;font-weight:600;font-size:11px;color:#888;background:#fafbfc;border-bottom:1px solid #e0e4ea;white-space:nowrap}
+tbody tr{border-bottom:1px solid #f0f2f5;transition:background .1s}
+tbody tr:hover{background:#f8f9fb}
+tbody tr:last-child{border-bottom:none}
+tr.dsep td{font-size:11px;font-weight:600;color:#666;background:#f5f7fa;padding:6px 12px;border-bottom:1px solid #e0e4ea}
+td{padding:7px 8px;color:#1a1a2e;vertical-align:middle}
+.td-time{font-family:monospace;font-size:14px;font-weight:700;white-space:nowrap}
+/* JS生成セル共通スタイル */
+.c11{font-size:11px}
+.c11c{font-size:11px;color:#555}
+.c11r{font-size:11px;color:#666}
+.c11tc{font-size:11px;text-align:center}
+.td-sc{text-align:center;padding:6px 4px}
+.sc-sym{font-size:16px;font-weight:900;line-height:1.1}
+.sc-num{font-size:13px;font-weight:700;border-radius:4px;padding:0 4px;display:inline-block;min-width:28px}
+.dsep-badge{font-size:10px;margin-left:8px;vertical-align:middle}
+.dsep-raw{font-size:11px;font-weight:900}
+.dsep-sub{font-size:10px;color:#888;margin-left:6px}
+@media(max-width:640px){
+  td{padding:5px;font-size:10px}
+  thead th{padding:5px;font-size:9px}
+  .wval{font-size:11px}
+  .badge{font-size:9px;padding:2px 5px}
+  .ptag{font-size:8px}
+  .hd-coord{display:none}
+  table{min-width:480px}
+}
+.wrow{display:flex;align-items:center;gap:6px}
+.wbar{flex:1;height:5px;background:#eee;border-radius:3px;overflow:hidden;min-width:40px}
+.wfill{height:100%;border-radius:3px;transition:width .5s}
+.wval{font-weight:700;font-size:13px;white-space:nowrap}
+.badge{display:inline-flex;align-items:center;font-size:11px;font-weight:600;padding:3px 9px;border-radius:6px;white-space:nowrap;border:1px solid}
+.j3{background:#e8f8e8;color:#1a6b1a;border-color:#6bbf6b}
+.j2{background:#e8f0fc;color:#1a3d8c;border-color:#6b9be0}
+.j1{background:#fff8e0;color:#7a5800;border-color:#d4aa00}
+.j0{background:#fce8e8;color:#8c1a1a;border-color:#e06b6b}
+.ptags{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px}
+.ptag{font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600;border:1px solid}
+.pt-south{background:#fff0e0;color:#a04000;border-color:#e09050}
+.pt-oppose{background:#f0e8ff;color:#5020a0;border-color:#a060e0}
+.pt-cross{background:#f5f0ff;color:#6030b0;border-color:#b080e0}
+.pt-compound{background:#ffe8e8;color:#a00020;border-color:#e04060}
+.pt-trend-up{background:#ffe8e8;color:#800000;border-color:#e06060}
+.pt-trend-dn{background:#e8f8e8;color:#006000;border-color:#60b060}
+.pt-north{background:#e8f8ff;color:#004080;border-color:#60a0e0}
+.pt-ew{background:#f0f0f8;color:#404060;border-color:#9090c0}
+.pt-ww-good{background:#e8f0fc;color:#1a3d8c;border-color:#6b9be0}
+.pt-ww-bad{background:#fce8e8;color:#8c1a1a;border-color:#e06b6b}
+.legend{padding:10px 12px;display:flex;gap:12px;flex-wrap:wrap;border-top:1px solid #e0e4ea;background:#fafbfc}
+.leg{display:flex;align-items:center;gap:5px;font-size:11px;color:#666}
+.leg-dot{width:8px;height:8px;border-radius:2px}
+.err{padding:12px 16px;background:#fce8e8;border:1px solid #e06b6b;border-radius:8px;font-size:12px;color:#8c1a1a;display:none;margin-bottom:12px}
+.empty{padding:48px;text-align:center;font-size:13px;color:#888}
+.prog{font-size:12px;color:#666;padding:24px;text-align:center;display:none}
+.note{font-size:11px;color:#888;margin-top:8px;line-height:1.7;background:#fafbfc;border:1px solid #e0e4ea;border-radius:8px;padding:10px 14px}
+</style>
+</head>
+<body data-fs-page="muroto_forecast">
+<!-- fishing-system 共通ナビ v2 (2グループ化) -->
+<nav class="fs-nav">
+  <div class="fs-nav-group fs-nav-group-private" data-group="private">
+    <span class="fs-nav-label">釣果収集系</span>
+    <a href="./collector.html"               data-fs="collector">釣果収集</a>
+    <a href="./condition.html"               data-fs="condition">条件分析</a>
+  </div>
+  <div class="fs-nav-group fs-nav-group-shared" data-group="shared">
+    <span class="fs-nav-label">公開系</span>
+    <a href="./fishingdata.html"             data-fs="fishingdata">統合釣果DB</a>
+    <a href="./muroto_offshore_current.html" data-fs="muroto_current">潮流</a>
+    <a href="./muroto_fishing_analysis.html" data-fs="muroto_analysis">解析</a>
+    <a href="./muroto_fishingforecast.html"  data-fs="muroto_forecast">出船判断</a>
+  </div>
+</nav>
+<style>
+.fs-nav{display:flex;flex-wrap:wrap;gap:.5rem;padding:.5rem;background:#0a3d62;border-bottom:2px solid #0ea5e9;font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic UI",sans-serif;box-sizing:border-box}
+.fs-nav-group{display:flex;align-items:center;flex-wrap:wrap;gap:.25rem;padding:.2rem .5rem;background:rgba(255,255,255,.04);border-radius:6px}
+.fs-nav-label{font-size:.68rem;color:#9fb3d1;letter-spacing:1.5px;margin-right:.35rem;text-transform:uppercase}
+.fs-nav-group-private{display:none}
+html.fs-reveal-private .fs-nav-group-private{display:flex}
+.fs-nav a{color:#eef;text-decoration:none;padding:.35rem .7rem;border-radius:4px;font-size:.9rem;font-weight:500;line-height:1.2}
+.fs-nav a:hover{background:#114477}
+.fs-nav a.fs-active{background:#0ea5e9;color:#023;pointer-events:none}
+</style>
+<script>
+(function(){
+  try{if(localStorage.getItem('fs-reveal-private')==='1')document.documentElement.classList.add('fs-reveal-private');}catch(e){}
+  var cur=document.body.getAttribute('data-fs-page');
+  if(!cur)return;var a=document.querySelector('.fs-nav a[data-fs="'+cur+'"]');
+  if(a)a.classList.add('fs-active');
+})();
+</script>
+
+<header class="hd">
+  <span aria-hidden="true" style="font-size:22px">⚓</span>
+  <div>
+    <div class="hd-title">室戸沖 出船判断システム</div>
+    <div class="hd-sub">MUROTO OFFSHORE — 5日間予報 / 0・6・12・18時</div>
+  </div>
+  <div class="hd-badge">
+    <span class="hd-coord">LAT 33.2 / LON 134.2</span>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="ctrl">
+    <button type="button" class="btn-run" id="run-btn" onclick="run()"><span aria-hidden="true">📡</span> データ取得・判定実行</button>
+    <button type="button" class="btn-csv" id="csv-btn" onclick="dlCSV()"><span aria-hidden="true">💾</span> CSV保存</button>
+    <span class="status" id="st" aria-live="polite">待機中 — ボタンを押してください</span>
+  </div>
+
+  <div class="err" id="err" role="alert"></div>
+  <div class="prog" id="prog" aria-live="polite">⟳ データ取得・判定処理中...</div>
+
+  <div class="tbl-wrap" id="tw">
+    <div class="empty">ボタンを押してデータを取得してください</div>
+  </div>
+
+  <div class="note" id="foot" style="display:none">
+    ※ <strong>波高</strong>は風波＋うねりの合成値（Open-Meteo Marine API）。うねりが卓越する場合は実際の体感と差が出る可能性があります。<br>
+    ※ <strong>風波</strong>は風によって直接生成される波成分（wind_wave_height）。合成波高より小さい値になります。<br>
+    ※ <strong>逆波</strong>判定は「風向 vs 波向き」の方向差から算出。波向きデータが取得できない場合は本補正は省略されます。<br>
+    ※ <strong>総合判定</strong>スコアは 0〜3 の4段階。顧客への送信は各日の 6:00 と 12:00 のスコア平均（日次総合）を使用します。最終出船判断は船長が行ってください。
+  </div>
+
+  <details style="margin-top:16px">
+    <summary style="font-size:12px;color:#888;cursor:pointer;padding:8px 12px;background:#f5f7fa;border:1px solid #e0e4ea;border-radius:8px;list-style:none;display:flex;align-items:center;gap:6px">
+      🔍 判定ロジック（6ファクター）— タップで展開
+    </summary>
+    <div class="logic-panel" style="margin-top:8px">
+      <div class="logic-grid">
+        <div class="lf">
+          <div class="lf-name">① 波高ベース値</div>
+          <div class="lf-desc" id="lf-f1">—</div>
+        </div>
+        <div class="lf lf-danger">
+          <div class="lf-name">② 風向補正</div>
+          <div class="lf-desc" id="lf-f2">—</div>
+        </div>
+        <div class="lf lf-danger">
+          <div class="lf-name">③ 逆波補正</div>
+          <div class="lf-desc" id="lf-f3">—</div>
+        </div>
+        <div class="lf lf-warn">
+          <div class="lf-name">④ 複合悪化補正</div>
+          <div class="lf-desc" id="lf-f4">—</div>
+        </div>
+        <div class="lf">
+          <div class="lf-name">⑤ 風速トレンド補正</div>
+          <div class="lf-desc" id="lf-f5">—</div>
+        </div>
+        <div class="lf lf-good">
+          <div class="lf-name">⑥ 風波補正</div>
+          <div class="lf-desc" id="lf-f6">—</div>
+        </div>
+      </div>
+    </div>
+  </details>
+</main>
+
+<script>
+const LAT=33.2,LON=134.2,TH=[0,6,12,18];
+const JD=[
+  {l:'× 出船不可',  c:'j0',notif:'❌ 中止'},
+  {l:'△ 未定・要確認',c:'j1',notif:'⚠ 要確認'},
+  {l:'○ 出船可能',  c:'j2',notif:'✅ 出船可'},
+  {l:'◎ 釣り日和',  c:'j3',notif:'✅ 出船可'},
+];
+const D16=['北','北北東','北東','東北東','東','東南東','南東','南南東','南','南南西','南西','西南西','西','西北西','北西','北北西'];
+const ARR=['↓','↙','←','↖','↑','↗','→','↘'];
+const WC=['#e06b6b','#d4aa00','#4a80d0','#4a9f4a'];
+const SYM=['×','△','○','◎'];
+let rows=[];
+
+// ============================================================
+// 判定基準（criteria.json から上書きされる / デフォルト値 v2.0）
+// ============================================================
+let C = {
+  // ① 判定閾値（変更なし）
+  excellent_max: 0.8,
+  good_max: 1.2,
+  caution_max: 1.6,
+  // ② 風向補正（v2.0変更）
+  wind_speed_threshold: 8.0,      // 全風向共通しきい値（旧: 南風のみ 6.0）
+  south_range_min: 135,
+  south_range_max: 225,
+  south_penalty: 0.4,             // 旧: 0.5
+  north_range_min: 315,
+  north_range_max: 45,
+  ew_penalty: 0.2,                // 旧: 0.25
+  // ③ 逆波補正（変更なし）
+  reverse_angle_min: 120,
+  reverse_penalty: 0.2,
+  cross_angle_min: 90,
+  cross_penalty: 0.1,
+  // ④ 複合悪化補正（v2.0変更）
+  wave_height_threshold: 0.8,
+  compound_penalty: 0.1,          // 旧: 0.2
+  compound_include_cross: false,  // 旧: true相当（交差波でも発動）→ 新: 逆波のみ
+  // ⑤ 風速トレンド補正（v2.0変更）
+  trend_change_threshold: 2.0,   // 旧: 0.5
+  trend_up_penalty: 0.2,
+  trend_down_bonus: 0.2,
+  // ⑥ 風波補正（変更なし）
+  ww_good_max: 0.3,
+  ww_good_bonus: 0.3,
+  ww_bad_min: 0.7,
+  ww_bad_penalty: 0.3
+};
+
+async function loadCriteria(){
+  try{
+    const res=await fetch('../data/criteria.json?_='+Date.now());
+    if(!res.ok)return;
+    const j=await res.json();
+    const th=j.thresholds||{};
+    const f2=j.f2_wind_direction||{};
+    const f3=j.f3_opposing_wave||{};
+    const f4=j.f4_compound||{};
+    const f5=j.f5_wind_trend||{};
+    const f6=j.f6_wind_wave||{};
+    if(th.excellent_max!=null) C.excellent_max=th.excellent_max;
+    if(th.good_max!=null)      C.good_max=th.good_max;
+    if(th.caution_max!=null)   C.caution_max=th.caution_max;
+    if(f2.wind_speed_threshold!=null)  C.wind_speed_threshold=f2.wind_speed_threshold;
+    if(f2.south_range_min!=null)       C.south_range_min=f2.south_range_min;
+    if(f2.south_range_max!=null)       C.south_range_max=f2.south_range_max;
+    if(f2.south_penalty!=null)         C.south_penalty=f2.south_penalty;
+    if(f2.north_range_min!=null)       C.north_range_min=f2.north_range_min;
+    if(f2.north_range_max!=null)       C.north_range_max=f2.north_range_max;
+    if(f2.ew_penalty!=null)            C.ew_penalty=f2.ew_penalty;
+    if(f3.reverse_angle_min!=null)    C.reverse_angle_min=f3.reverse_angle_min;
+    if(f3.reverse_penalty!=null)      C.reverse_penalty=f3.reverse_penalty;
+    if(f3.cross_angle_min!=null)      C.cross_angle_min=f3.cross_angle_min;
+    if(f3.cross_penalty!=null)        C.cross_penalty=f3.cross_penalty;
+    if(f4.wave_height_threshold!=null) C.wave_height_threshold=f4.wave_height_threshold;
+    if(f4.penalty!=null)               C.compound_penalty=f4.penalty;
+    if(f4.include_cross_wave!=null)    C.compound_include_cross=f4.include_cross_wave;
+    if(f5.change_threshold!=null)     C.trend_change_threshold=f5.change_threshold;
+    if(f5.up_penalty!=null)           C.trend_up_penalty=f5.up_penalty;
+    if(f5.down_bonus!=null)           C.trend_down_bonus=f5.down_bonus;
+    if(f6.good_max!=null)             C.ww_good_max=f6.good_max;
+    if(f6.good_bonus!=null)           C.ww_good_bonus=f6.good_bonus;
+    if(f6.bad_min!=null)              C.ww_bad_min=f6.bad_min;
+    if(f6.bad_penalty!=null)          C.ww_bad_penalty=f6.bad_penalty;
+    const upd=j._updated||'';
+    if(upd) setSt('判定基準: criteria.json ('+upd+') を読み込みました');
+    updateLogicPanel();
+  }catch(_){}
+}
+
+function updateLogicPanel(){
+  const f1=document.getElementById('lf-f1');
+  const f2=document.getElementById('lf-f2');
+  const f3=document.getElementById('lf-f3');
+  const f4=document.getElementById('lf-f4');
+  const f5=document.getElementById('lf-f5');
+  const f6=document.getElementById('lf-f6');
+  if(f1) f1.innerHTML=
+    `波高メートル値をそのまま使用<br>`+
+    `最終値で判定: ≤${C.excellent_max}m→◎ / ≤${C.good_max}m→○<br>`+
+    `≤${C.caution_max}m→△ / >${C.caution_max}m→×`;
+  if(f2) f2.innerHTML=
+    `風速≤${C.wind_speed_threshold}m/s→補正なし（全風向共通）<br>`+
+    `風速>${C.wind_speed_threshold}m/s時: 南系${C.south_range_min}〜${C.south_range_max}°→+${C.south_penalty}<br>`+
+    `東西系→+${C.ew_penalty} / 北系${C.north_range_min}〜${C.north_range_max}°→±0`;
+  if(f3) f3.innerHTML=
+    `差≥${C.reverse_angle_min}°→+${C.reverse_penalty}（逆波）<br>`+
+    `差${C.cross_angle_min}〜${C.reverse_angle_min}°→+${C.cross_penalty}（交差波）<br>`+
+    `差&lt;${C.cross_angle_min}°→±0`;
+  if(f4) f4.innerHTML=
+    `波高>${C.wave_height_threshold}m かつ②南風 かつ③逆波${C.compound_include_cross?'/交差波':'（のみ）'}→+${C.compound_penalty}<br>`+
+    `${C.compound_include_cross?'':'※交差波では発動しない'}`;
+  if(f5) f5.innerHTML=
+    `前比+${C.trend_change_threshold}m/s↑→+${C.trend_up_penalty}<br>`+
+    `前比−${C.trend_change_threshold}m/s↓→−${C.trend_down_bonus}`;
+  if(f6) f6.innerHTML=
+    `≤${C.ww_good_max}m→−${C.ww_good_bonus}（風波小）<br>`+
+    `≥${C.ww_bad_min}m→+${C.ww_bad_penalty}（風波大）/ その他→±0`;
+}
+
+const $=id=>document.getElementById(id);
+const d2d=d=>D16[Math.round(d/22.5)%16];
+const d2a=d=>ARR[Math.round(d/45)%8];
+const setSt=m=>$('st').textContent=m;
+function showErr(m){const e=$('err');e.style.display='';e.textContent='⚠ '+m}
+function hideErr(){$('err').style.display='none'}
+function angleDiff(a,b){const d=Math.abs((a-b+360)%360);return d>180?360-d:d}
+
+function rawToScore(raw){
+  return raw<=C.excellent_max?3:raw<=C.good_max?2:raw<=C.caution_max?1:0;
+}
+
+function calcScore(wave,windNow,windPrev,windDir,waveDir,windWave){
+  const tags=[];
+  let s=wave;  // 波高メートル値をベースに使用（低いほど良い）
+
+  // ② 風向補正: 共通風速しきい値を超えた場合のみ発動（v2.0変更）
+  const inSouth=windDir>=C.south_range_min&&windDir<=C.south_range_max;
+  const inNorth=windDir>=C.north_range_min||windDir<=C.north_range_max;
+  const windAboveThreshold=windNow>C.wind_speed_threshold;
+  let southPenalty=false;
+  if(windAboveThreshold){
+    if(inSouth){s+=C.south_penalty;southPenalty=true;tags.push({cls:'pt-south',lbl:'南風↑'})}
+    else if(inNorth){tags.push({cls:'pt-north',lbl:'北風◎'})}
+    else{s+=C.ew_penalty;tags.push({cls:'pt-ew',lbl:'東西風'})}
+  }else{
+    // 弱風時は風向補正なし（北風はラベルのみ表示）
+    if(inNorth) tags.push({cls:'pt-north',lbl:'北風◎'});
+  }
+
+  // ③ 逆波補正: 逆波と交差波を区別して記録（v2.0: 複合発動条件で使い分け）
+  let reversePenalty=false,crossPenalty=false;
+  if(waveDir!=null){
+    const diff=angleDiff(windDir,waveDir);
+    if(diff>=C.reverse_angle_min){s+=C.reverse_penalty;reversePenalty=true;tags.push({cls:'pt-oppose',lbl:'逆波'})}
+    else if(diff>=C.cross_angle_min){s+=C.cross_penalty;crossPenalty=true;tags.push({cls:'pt-cross',lbl:'交差波'})}
+  }
+
+  // ④ 複合悪化補正: 逆波のみ発動（v2.0変更 / include_cross_wave=trueなら交差波も含む）
+  const compoundTrigger=reversePenalty||(C.compound_include_cross&&crossPenalty);
+  if(wave>C.wave_height_threshold&&southPenalty&&compoundTrigger){s+=C.compound_penalty;tags.push({cls:'pt-compound',lbl:'複合悪化'})}
+
+  if(windPrev!=null){
+    if(windNow>windPrev+C.trend_change_threshold){s+=C.trend_up_penalty;tags.push({cls:'pt-trend-up',lbl:'風↑'})}
+    else if(windNow<windPrev-C.trend_change_threshold){s-=C.trend_down_bonus;tags.push({cls:'pt-trend-dn',lbl:'風↓'})}
+  }
+
+  if(windWave!=null){
+    if(windWave<=C.ww_good_max){s-=C.ww_good_bonus;tags.push({cls:'pt-ww-good',lbl:'風波小'})}
+    else if(windWave>=C.ww_bad_min){s+=C.ww_bad_penalty;tags.push({cls:'pt-ww-bad',lbl:'風波大'})}
+  }
+
+  const rawScore=Math.max(0,Math.round(s*10)/10);
+  return{score:rawToScore(rawScore),rawScore,tags};
+}
+
+async function run(){
+  const btn=$('run-btn');
+  btn.disabled=true;hideErr();$('prog').style.display='block';setSt('判定基準を読み込み中...');
+  await loadCriteria();
+  updateLogicPanel();
+  setSt('データ読み込み中...');
+  try{
+    let rawRows=[],updatedAt=null;
+    try{
+      const res=await fetch('../data/forecast_data.json?_='+Date.now());
+      if(res.ok){const j=await res.json();if(j.rows?.length){rawRows=j.rows;updatedAt=j.updated}}
+    }catch(_){}
+
+    if(!rawRows.length){
+      setSt('APIから直接取得中...');
+      const MURL=`https://marine-api.open-meteo.com/v1/marine?latitude=${LAT}&longitude=${LON}&hourly=wave_height,wave_direction,wind_wave_height&timezone=Asia%2FTokyo&forecast_days=5`;
+      const WURL=`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=wind_speed_10m,wind_direction_10m,precipitation&wind_speed_unit=ms&timezone=Asia%2FTokyo&forecast_days=5`;
+      const[mRes,wRes]=await Promise.all([fetch(MURL),fetch(WURL)]);
+      if(!mRes.ok)throw new Error('Marine API エラー: '+mRes.status);
+      if(!wRes.ok)throw new Error('Weather API エラー: '+wRes.status);
+      const m=await mRes.json(),w=await wRes.json();
+      const wMap={};
+      w.hourly.time.forEach((t,i)=>{wMap[t]=i});
+      m.hourly.time.forEach((t,i)=>{
+        const h=parseInt(t.slice(11,13),10);
+        if(!TH.includes(h))return;
+        const wi=wMap[t];if(wi===undefined)return;
+        const wave=m.hourly.wave_height[i],wind=w.hourly.wind_speed_10m[wi];
+        if(wave==null||wind==null)return;
+        rawRows.push({
+          t,
+          wave:Math.round(wave*100)/100,
+          wind:Math.round(wind*10)/10,
+          dir:Math.round(w.hourly.wind_direction_10m[wi]||0),
+          waveDir:m.hourly.wave_direction[i]!=null?Math.round(m.hourly.wave_direction[i]):null,
+          windWave:m.hourly.wind_wave_height?.[i]!=null?Math.round(m.hourly.wind_wave_height[i]*100)/100:null,
+          rain:Math.round((w.hourly.precipitation[wi]||0)*10)/10,
+        });
+      });
+      if(!rawRows.length)throw new Error('対象時刻のデータが見つかりません');
+    }
+
+    buildRows(rawRows);
+    renderTable();
+    $('csv-btn').style.display='';$('foot').style.display='';
+    const fmt={month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'};
+    const now=new Date().toLocaleString('ja-JP',fmt);
+    setSt(updatedAt?'完了 — データ更新: '+new Date(updatedAt).toLocaleString('ja-JP',fmt)+' / 表示: '+now:'完了 — '+now+'取得');
+  }catch(e){
+    showErr('取得失敗: '+e.message+' — ネットワーク接続を確認してください');setSt('エラー');
+  }finally{
+    btn.disabled=false;$('prog').style.display='none';
+  }
+}
+
+function buildRows(raw){
+  rows=[];let pw=null;
+  raw.forEach(r=>{
+    const wave=Number(r.wave),wind=Number(r.wind),dir=Number(r.dir),rain=Number(r.rain);
+    const waveDir=r.waveDir!=null&&!isNaN(r.waveDir)?Number(r.waveDir):null;
+    const windWave=r.windWave!=null&&!isNaN(r.windWave)?Number(r.windWave):null;
+    const{score,rawScore,tags}=calcScore(wave,wind,pw,dir,waveDir,windWave);
+    pw=wind;
+    rows.push({...r,wave,wind,dir,rain,waveDir,windWave,sc:score,rawSc:rawScore,tags});
+  });
+}
+
+function calcDayScores(){
+  const map={};
+  rows.forEach(r=>{
+    const dt=r.t.slice(0,10),h=parseInt(r.t.slice(11,13),10);
+    if(h!==6&&h!==12)return;
+    (map[dt]||(map[dt]=[])).push(r.rawSc);
+  });
+  rows.forEach(r=>{const dt=r.t.slice(0,10);if(!map[dt])map[dt]=[r.rawSc]});
+  const result={};
+  Object.keys(map).forEach(dt=>{
+    const avg=map[dt].reduce((a,b)=>a+b,0)/map[dt].length;
+    const raw=Math.max(0,Math.round(avg*10)/10);
+    result[dt]={sc:rawToScore(raw),raw};
+  });
+  return result;
+}
+
+function renderTable(){
+  const ds=calcDayScores();
+  let h=`<div class="tbl-head"><h2>🌊 海況予報 / 出船判定</h2></div>
+<div class="tbl-scroll"><table><thead><tr>
+<th style="min-width:58px">時刻</th>
+<th style="min-width:88px">波高</th>
+<th style="min-width:62px">風波</th>
+<th style="min-width:72px">波向き</th>
+<th style="min-width:118px">風速・風向</th>
+<th style="min-width:62px">降水量</th>
+<th style="min-width:70px;text-align:center">総合</th>
+</tr></thead><tbody>`;
+  let ld='';
+  rows.forEach((r,i)=>{
+    const dt=r.t.slice(0,10),tm=r.t.slice(11,16);
+    if(dt!==ld){
+      const dstr=new Date(r.t+':00').toLocaleDateString('ja-JP',{month:'numeric',day:'numeric',weekday:'short'});
+      const dd=ds[dt]??{sc:0,raw:0},dj=JD[dd.sc];
+      h+=`<tr class="dsep"><td colspan="7">${dstr}<span class="badge ${dj.c} dsep-badge">総合 ${dj.l} <span class="dsep-raw">${dd.raw.toFixed(1)}</span></span><span class="dsep-sub">（6時・12時平均）</span></td></tr>`;
+      ld=dt;
+    }
+    const wc=WC[r.sc],ww=Math.min(100,(r.wave/2)*100);
+    const wwC=r.windWave==null?'#bbb':r.windWave<=0.3?'#4a80d0':r.windWave>=0.7?'#e06b6b':'#d4aa00';
+    const wwH=r.windWave!=null?`<span style="color:${wwC};font-weight:700">${r.windWave.toFixed(2)}m</span>`:'<span style="color:#bbb">—</span>';
+    let tr='';
+    if(i>0){const df=r.wind-rows[i-1].wind;tr=df>C.trend_change_threshold?'<span style="color:#c0392b;font-size:10px">↑</span>':df<-C.trend_change_threshold?'<span style="color:#27ae60;font-size:10px">↓</span>':'';}
+    const tagH=r.tags.length?`<div class="ptags">${r.tags.map(t=>`<span class="ptag ${t.cls}">${t.lbl}</span>`).join('')}</div>`:'';
+    const wdH=r.waveDir!=null?`${d2a(r.waveDir)} ${d2d(r.waveDir)}`:'<span style="color:#bbb">—</span>';
+    h+=`<tr>
+<td><span class="td-time">${tm}</span></td>
+<td><div class="wrow"><div class="wbar"><div class="wfill" style="width:${ww.toFixed(0)}%;background:${wc}"></div></div><span class="wval" style="color:${wc}">${r.wave.toFixed(2)}m</span></div></td>
+<td class="c11tc">${wwH}</td>
+<td class="c11c">${wdH}</td>
+<td class="c11">${d2a(r.dir)}<strong>${r.wind.toFixed(1)}</strong>m/s${tr} <span style="font-size:10px;color:#888">${d2d(r.dir)}</span>${tagH}</td>
+<td class="c11r">${r.rain.toFixed(1)}mm</td>
+<td class="td-sc"><div class="sc-sym" style="color:${wc}">${SYM[r.sc]}</div><div class="sc-num" style="color:${wc};background:${wc}22">${r.rawSc.toFixed(1)}</div></td>
+</tr>`;
+  });
+  h+=`</tbody></table></div><div class="legend">
+<span class="leg"><span class="leg-dot" style="background:#4a9f4a"></span>◎ 3 ≤${C.excellent_max.toFixed(1)}m</span>
+<span class="leg"><span class="leg-dot" style="background:#4a80d0"></span>○ 2 ≤${C.good_max.toFixed(1)}m</span>
+<span class="leg"><span class="leg-dot" style="background:#d4aa00"></span>△ 1 ≤${C.caution_max.toFixed(1)}m</span>
+<span class="leg"><span class="leg-dot" style="background:#e06b6b"></span>× 0 >${C.caution_max.toFixed(1)}m</span>
+<span style="font-size:10px;color:#aaa;margin-left:4px">|</span>
+<span class="leg"><span class="ptag pt-south">南風↑</span></span>
+<span class="leg"><span class="ptag pt-oppose">逆波</span></span>
+<span class="leg"><span class="ptag pt-compound">複合悪化</span></span>
+</div>`;
+  $('tw').innerHTML=h;
+}
+
+function dlCSV(){
+  const hd='time,wave_m,wind_ms,wind_dir_deg,wind_dir,wave_dir_deg,wave_dir,rain_mm,score,judge,notif_status,penalties';
+  const ls=rows.map(r=>{
+    const wdDeg=r.waveDir??'',wdLbl=r.waveDir!=null?d2d(r.waveDir):'',ptags=r.tags.map(t=>t.lbl).join('/');
+    return `${r.t},${r.wave.toFixed(2)},${r.wind.toFixed(1)},${r.dir},${d2d(r.dir)},${wdDeg},${wdLbl},${r.rain.toFixed(1)},${r.sc},"${JD[r.sc].l}","${JD[r.sc].notif}","${ptags}"`;
+  });
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\uFEFF'+[hd,...ls].join('\n')],{type:'text/csv;charset=utf-8'}));
+  a.download=`muroto_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+</script>
+</body>
+</html>

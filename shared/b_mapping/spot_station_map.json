@@ -1,0 +1,158 @@
+{
+  "spots": [
+    {
+      "canonical_spot": "宇和島",
+      "confidence": "auto",
+      "created_at": "2026-04-18T12:46:33+09:00",
+      "current_distance_km": null,
+      "current_point": null,
+      "distance_km": 0.0,
+      "geocoding_source": "csv_mode",
+      "nearest_station": "宇和島",
+      "note": "bootstrap: 3 rows, coord_agreement=1.000",
+      "raw_spots": [
+        "宇和島"
+      ],
+      "sea_area": "豊後水道",
+      "spot_lat": 33.22,
+      "spot_lng": 132.56,
+      "updated_at": "2026-04-18T12:46:33+09:00"
+    },
+    {
+      "canonical_spot": "安満地",
+      "confidence": "verified",
+      "created_at": "2026-04-18T12:46:33+09:00",
+      "current_distance_km": 33.951827,
+      "current_point": "北西",
+      "distance_km": 33.071152,
+      "geocoding_source": "csv_mode",
+      "nearest_station": "高知",
+      "note": "bootstrap: 32 rows, coord_agreement=1.000",
+      "raw_spots": [
+        "安満地",
+        "安満地（風裏）",
+        "高知 安満地"
+      ],
+      "sea_area": "土佐湾",
+      "spot_lat": 33.47,
+      "spot_lng": 133.88,
+      "updated_at": "2026-04-18T12:46:33+09:00"
+    },
+    {
+      "canonical_spot": "室戸沖",
+      "confidence": "verified",
+      "created_at": "2026-04-18T12:46:33+09:00",
+      "current_distance_km": 10.479817,
+      "current_point": "北東",
+      "distance_km": 0.0,
+      "geocoding_source": "csv_mode",
+      "nearest_station": "室戸",
+      "note": "bootstrap: 772 rows, coord_agreement=0.978",
+      "raw_spots": [
+        "地磯",
+        "室戸地磯",
+        "室戸岬沖",
+        "室戸沖",
+        "室戸沖周辺",
+        "室戸沖磯",
+        "室戸沖近場",
+        "室戸沖（岬沖）",
+        "室戸沖（港）",
+        "室戸沖（磯）",
+        "室戸沖（近場）",
+        "室戸沖（風裏）",
+        "室戸港",
+        "室戸港内",
+        "室戸近場",
+        "室戸（磯）",
+        "高知室戸沖",
+        "高知室戸沖周辺",
+        "高知室戸沖周辺（散歩がてら）",
+        "高知室戸沖近場",
+        "高知室戸沖（風浦）"
+      ],
+      "sea_area": "室戸沖",
+      "spot_lat": 33.29,
+      "spot_lng": 134.18,
+      "updated_at": "2026-04-18T12:46:33+09:00"
+    },
+    {
+      "canonical_spot": "小笠原",
+      "confidence": "manual",
+      "created_at": "2026-04-18T12:46:33+09:00",
+      "current_distance_km": null,
+      "current_point": null,
+      "distance_km": 1032.744938,
+      "geocoding_source": "csv_mode",
+      "nearest_station": "その他",
+      "note": "bootstrap: 11 rows, coord_agreement=1.000",
+      "raw_spots": [
+        "小笠原",
+        "小笠原沖",
+        "小笠原諸島"
+      ],
+      "sea_area": "小笠原",
+      "spot_lat": 27.09,
+      "spot_lng": 142.19,
+      "updated_at": "2026-04-18T12:46:33+09:00"
+    },
+    {
+      "canonical_spot": "愛媛",
+      "confidence": "manual",
+      "created_at": "2026-04-18T12:46:33+09:00",
+      "current_distance_km": null,
+      "current_point": null,
+      "distance_km": 0.0,
+      "geocoding_source": "csv_mode",
+      "nearest_station": "宇和島",
+      "note": "bootstrap: 6 rows, coord_agreement=1.000",
+      "raw_spots": [
+        "愛媛"
+      ],
+      "sea_area": "豊後水道",
+      "spot_lat": 33.22,
+      "spot_lng": 132.56,
+      "updated_at": "2026-04-18T12:46:33+09:00"
+    },
+    {
+      "canonical_spot": "柏島",
+      "confidence": "manual",
+      "created_at": "2026-04-18T12:46:33+09:00",
+      "current_distance_km": null,
+      "current_point": null,
+      "distance_km": 10.880217,
+      "geocoding_source": "csv_mode",
+      "nearest_station": "足摺",
+      "note": "bootstrap: 6 rows, coord_agreement=1.000",
+      "raw_spots": [
+        "柏島",
+        "高知 柏島"
+      ],
+      "sea_area": "足摺沖",
+      "spot_lat": 32.77,
+      "spot_lng": 132.62,
+      "updated_at": "2026-04-18T12:46:33+09:00"
+    },
+    {
+      "canonical_spot": "甲浦",
+      "confidence": "verified",
+      "created_at": "2026-04-18T12:46:33+09:00",
+      "current_distance_km": 40.355112,
+      "current_point": "北東",
+      "distance_km": 34.104581,
+      "geocoding_source": "csv_mode",
+      "nearest_station": "室戸",
+      "note": "bootstrap: 27 rows, coord_agreement=1.000",
+      "raw_spots": [
+        "甲浦",
+        "甲浦（風裏）"
+      ],
+      "sea_area": "室戸沖",
+      "spot_lat": 33.57,
+      "spot_lng": 134.33,
+      "updated_at": "2026-04-18T12:46:33+09:00"
+    }
+  ],
+  "updated_at": "2026-04-18T12:46:33+09:00",
+  "version": "1.0.0"
+}

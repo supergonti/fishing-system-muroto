@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>室戸沖 室戸1 統合釣果データベース</title>
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="alternate icon" href="./favicon.ico">
+<style>
+:root{
+  --bg:#f0f4f8;--surface:#fff;--primary:#1a3a5c;--primary2:#1a5276;
+  --accent:#2e86c1;--gold2:#d4ac50;--green:#1e8449;
+  --teal:#0e7490;--border:#d5dbdb;--border2:#c8d6e5;
+  --text:#2c3e50;--text2:#555;--text3:#888;
+  --env-hd:#0e5f6e;--env-bg:#e8f6f8;--env-bd:#a8dadc;
+  --badge-bg:#d5e8f3;--badge-bd:#aed6f1;
+  --r:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);font-family:'Yu Gothic UI','Meiryo UI','Hiragino Sans',sans-serif;color:var(--text);min-height:100vh;}
+
+/* ─── ローディング ─── */
+#loading-bar{background:var(--accent);height:3px;width:0;transition:width .4s;position:fixed;top:0;left:0;z-index:999;}
+#loading-msg{text-align:center;padding:40px;color:var(--text3);font-size:1rem;}
+
+/* ─── ヘッダー ─── */
+.header{background:#1a3a6c;padding:10px 16px;color:#fff;display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+.header-icon{font-size:1.6rem;line-height:1;}
+.header-title{font-size:1.2rem;font-weight:700;letter-spacing:2px;}
+
+/* ─── 折りたたみセクション共通 ─── */
+.section{margin:8px 10px 0;}
+details.panel{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);}
+details.panel summary{
+  list-style:none;display:flex;align-items:center;justify-content:space-between;
+  padding:8px 14px;cursor:pointer;font-size:.85rem;font-weight:700;
+  color:var(--primary);background:var(--surface);user-select:none;
+}
+details.panel summary::-webkit-details-marker{display:none;}
+details.panel summary::after{content:'▾';font-size:.8rem;color:var(--text3);transition:transform .2s;}
+details.panel[open] summary::after{transform:rotate(180deg);}
+details.panel summary:hover{background:#f5f8fb;}
+.panel-body{padding:10px 14px 12px;border-top:1px solid var(--border2);}
+
+/* ─── 各種情報 ─── */
+.info-sub{font-size:.75rem;color:var(--text3);margin-bottom:8px;line-height:1.6;}
+.stats-row{display:flex;gap:16px;flex-wrap:wrap;align-items:center;}
+.stat-item{text-align:center;}
+.sv{font-size:1.3rem;font-weight:700;color:var(--accent);}
+.sl{font-size:.7rem;color:var(--text3);margin-top:1px;}
+
+/* ─── 絞り込みバー ─── */
+.filter-grid{display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
+.filter-in{background:var(--surface);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;font-family:inherit;font-size:13px;color:var(--text);outline:none;}
+.filter-in:focus{border-color:var(--accent);}
+#filter-q{width:160px;}
+
+/* ─── チェックボックス型ドロップダウン ─── */
+.multi-dd{position:relative;display:inline-block;}
+.multi-dd-btn{
+  display:inline-flex;align-items:center;gap:6px;justify-content:space-between;
+  min-width:130px;padding:7px 10px;background:var(--surface);
+  border:1px solid var(--border2);border-radius:6px;font-family:inherit;
+  font-size:13px;color:var(--text);cursor:pointer;user-select:none;
+}
+.multi-dd-btn:hover{border-color:var(--accent);}
+.multi-dd-btn.active{border-color:var(--accent);background:#f0f7ff;}
+.dd-arrow{font-size:.7rem;color:var(--text3);transition:transform .2s;flex-shrink:0;}
+.multi-dd.open .dd-arrow{transform:rotate(180deg);}
+.multi-dd-list{
+  display:none;position:fixed;
+  background:var(--surface);border:1px solid var(--border2);border-radius:8px;
+  box-shadow:0 4px 16px rgba(0,0,0,.18);z-index:9999;
+  min-width:160px;max-width:240px;max-height:260px;overflow-y:auto;padding:4px 0;
+}
+.multi-dd.open .multi-dd-list{display:block;}
+.dd-search{padding:6px 10px;border-bottom:1px solid var(--border);}
+.dd-search input{width:100%;border:1px solid var(--border2);border-radius:5px;padding:4px 8px;font-size:12px;outline:none;font-family:inherit;}
+.dd-item{display:flex;align-items:center;gap:8px;padding:6px 12px;cursor:pointer;font-size:13px;white-space:nowrap;}
+.dd-item:hover{background:#f0f7ff;}
+.dd-item input[type=checkbox]{width:14px;height:14px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;}
+.dd-clear{padding:5px 12px;font-size:.75rem;color:var(--accent);cursor:pointer;border-top:1px solid var(--border);display:block;text-align:center;}
+.dd-clear:hover{background:#f0f7ff;}
+
+/* ─── ボタン ─── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border:0;border-radius:7px;font:500 .85rem inherit;color:#fff;cursor:pointer;transition:opacity .15s;}
+.btn:hover{opacity:.85;}
+.btn-reset{background:#888;}
+.btn-dl{background:var(--green);}
+
+/* ─── 件数表示 ─── */
+.count-badge{
+  background:var(--env-bg);border:1px solid var(--env-bd);border-radius:12px;
+  padding:3px 11px;font-size:.8rem;color:var(--env-hd);font-weight:700;white-space:nowrap;
+}
+
+/* ─── テーブルエリア ─── */
+.table-section{margin:8px 10px 12px;}
+.table-scroll{overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 210px);border:1px solid var(--border2);border-radius:var(--r);background:var(--surface);}
+table{width:100%;border-collapse:collapse;font-size:.84rem;}
+thead th{position:sticky;top:0;background:var(--primary);color:#fff;padding:9px 10px;text-align:left;white-space:nowrap;font-size:.78rem;letter-spacing:.4px;z-index:10;}
+thead th.env-th{background:var(--env-hd);}
+thead th.sort-th{cursor:pointer;user-select:none;}
+thead th.sort-th:hover{opacity:.85;}
+thead th.active-sort{color:var(--gold2);}
+tbody tr{border-bottom:1px solid var(--border);}
+tbody tr:hover td{background:#f4f8fb;}
+tbody tr:hover td.env-td{background:#d8f0f3;}
+td{padding:7px 9px;white-space:nowrap;vertical-align:middle;}
+td.env-td{background:var(--env-bg);color:#0a4a57;}
+.col-species{width:96px;max-width:96px;overflow:hidden;text-overflow:ellipsis;}
+.col-spot{width:80px;max-width:80px;overflow:hidden;text-overflow:ellipsis;}
+.dt{font-size:.8rem;color:var(--text2);}
+.sp{font-weight:600;color:var(--primary);}
+.st-badge{background:var(--badge-bg);border:1px solid var(--badge-bd);border-radius:8px;padding:1px 7px;font-size:.75rem;color:var(--primary);font-weight:600;}
+.st-other{background:#f0f0f0;border:1px solid #ccc;border-radius:8px;padding:1px 7px;font-size:.75rem;color:#888;font-weight:500;}
+.tide-badge{border-radius:8px;padding:1px 7px;font-size:.75rem;font-weight:600;}
+.tide-大潮{background:#fdebd0;color:#784212;}
+.tide-中潮{background:#d5f5e3;color:#1e8449;}
+.tide-小潮{background:#d6eaf8;color:#1a5276;}
+.tide-長潮,.tide-若潮{background:#e8daef;color:#6c3483;}
+.moon-badge{font-size:.8rem;}
+.no-data{color:var(--text3);}
+.empty-state{text-align:center;padding:60px 20px;color:var(--text3);}
+.empty-state .ei{font-size:3rem;margin-bottom:12px;}
+.sort-arrow{font-size:.7rem;margin-left:2px;opacity:.6;}
+.active-sort .sort-arrow{opacity:1;}
+</style>
+</head>
+<body data-fs-page="fishingdata">
+<!-- fishing-system 共通ナビ v2 (2グループ化) -->
+<nav class="fs-nav">
+  <div class="fs-nav-group fs-nav-group-private" data-group="private">
+    <span class="fs-nav-label">釣果収集系</span>
+    <a href="./collector.html"               data-fs="collector">釣果収集</a>
+    <a href="./condition.html"               data-fs="condition">条件分析</a>
+  </div>
+  <div class="fs-nav-group fs-nav-group-shared" data-group="shared">
+    <span class="fs-nav-label">公開系</span>
+    <a href="./fishingdata.html"             data-fs="fishingdata">統合釣果DB</a>
+    <a href="./muroto_offshore_current.html" data-fs="muroto_current">潮流</a>
+    <a href="./muroto_fishing_analysis.html" data-fs="muroto_analysis">解析</a>
+    <a href="./muroto_fishingforecast.html"  data-fs="muroto_forecast">出船判断</a>
+  </div>
+</nav>
+<style>
+.fs-nav{display:flex;flex-wrap:wrap;gap:.5rem;padding:.5rem;background:#0a3d62;border-bottom:2px solid #0ea5e9;font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic UI",sans-serif;box-sizing:border-box}
+.fs-nav-group{display:flex;align-items:center;flex-wrap:wrap;gap:.25rem;padding:.2rem .5rem;background:rgba(255,255,255,.04);border-radius:6px}
+.fs-nav-label{font-size:.68rem;color:#9fb3d1;letter-spacing:1.5px;margin-right:.35rem;text-transform:uppercase}
+.fs-nav-group-private{display:none}
+html.fs-reveal-private .fs-nav-group-private{display:flex}
+.fs-nav a{color:#eef;text-decoration:none;padding:.35rem .7rem;border-radius:4px;font-size:.9rem;font-weight:500;line-height:1.2}
+.fs-nav a:hover{background:#114477}
+.fs-nav a.fs-active{background:#0ea5e9;color:#023;pointer-events:none}
+</style>
+<script>
+(function(){
+  try{if(localStorage.getItem('fs-reveal-private')==='1')document.documentElement.classList.add('fs-reveal-private');}catch(e){}
+  var cur=document.body.getAttribute('data-fs-page');
+  if(!cur)return;var a=document.querySelector('.fs-nav a[data-fs="'+cur+'"]');
+  if(a)a.classList.add('fs-active');
+})();
+</script>
+<div id="loading-bar"></div>
+
+<!-- ヘッダー -->
+<div class="header">
+  <span class="header-icon">🐟</span>
+  <div class="header-title">室戸沖 室戸1 統合釣果データベース</div>
+</div>
+
+<div id="loading-msg">📡 データを読み込み中...</div>
+<div id="main-content" style="display:none;">
+
+  <!-- 各種情報 -->
+  <div class="section">
+    <details class="panel" id="panel-info">
+      <summary>各種情報</summary>
+      <div class="panel-body">
+        <div class="info-sub">天気・水温・潮汐・月齢を自動結合 ／ 毎週月曜自動更新 ／ Open-Meteo API</div>
+        <div class="stats-row">
+          <div class="stat-item">
+            <div class="sv" id="s-total">—</div>
+            <div class="sl">総釣果件数</div>
+          </div>
+          <div class="stat-item">
+            <div class="sv" id="s-updated">—</div>
+            <div class="sl">最終更新日</div>
+          </div>
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- 絞り込み -->
+  <div class="section">
+    <details class="panel" id="panel-filter" open>
+      <summary>絞り込み</summary>
+      <div class="panel-body">
+        <div class="filter-grid">
+
+          <!-- キーワード -->
+          <input type="text" class="filter-in" id="filter-q" placeholder="🔍 キーワード" oninput="applyFilters()">
+
+          <!-- 魚種（複数選択） -->
+          <div class="multi-dd" id="dd-species">
+            <div class="multi-dd-btn" onclick="toggleDD('species')">
+              <span class="dd-label" id="dd-species-label">🐟 魚種</span>
+              <span class="dd-arrow">▾</span>
+            </div>
+            <div class="multi-dd-list" id="dd-species-list">
+              <div class="dd-search"><input type="text" placeholder="絞り込み検索..." oninput="filterDDItems('species',this.value)"></div>
+              <div id="dd-species-items"></div>
+              <span class="dd-clear" onclick="clearDD('species')">選択をクリア</span>
+            </div>
+          </div>
+
+          <!-- 釣り場（複数選択） -->
+          <div class="multi-dd" id="dd-spot">
+            <div class="multi-dd-btn" onclick="toggleDD('spot')">
+              <span class="dd-label" id="dd-spot-label">📍 釣り場</span>
+              <span class="dd-arrow">▾</span>
+            </div>
+            <div class="multi-dd-list" id="dd-spot-list">
+              <div class="dd-search"><input type="text" placeholder="絞り込み検索..." oninput="filterDDItems('spot',this.value)"></div>
+              <div id="dd-spot-items"></div>
+              <span class="dd-clear" onclick="clearDD('spot')">選択をクリア</span>
+            </div>
+          </div>
+
+          <!-- 件数表示 -->
+          <span class="count-badge" id="filter-count">—</span>
+
+          <!-- リセット -->
+          <button class="btn btn-reset" onclick="resetFilters()">🔄 リセット</button>
+
+          <!-- CSV保存 -->
+          <button class="btn btn-dl" onclick="downloadCSV()">📥 CSV保存</button>
+
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- テーブル -->
+  <div class="table-section">
+    <div class="table-scroll">
+      <table id="main-table">
+        <thead>
+          <tr>
+            <th class="sort-th" onclick="setSort('date')">投稿日<span class="sort-arrow" id="arr-date"></span></th>
+            <th class="sort-th col-species" onclick="setSort('species')">魚種<span class="sort-arrow" id="arr-species"></span></th>
+            <th class="sort-th" onclick="setSort('size_cm')">cm<span class="sort-arrow" id="arr-size_cm"></span></th>
+            <th class="sort-th" onclick="setSort('weight_kg')">kg<span class="sort-arrow" id="arr-weight_kg"></span></th>
+            <th>匹</th>
+            <th>釣法</th>
+            <th class="col-spot">釣り場</th>
+            <th>観測地点</th>
+            <th class="env-th sort-th" onclick="setSort('潮汐_計測')">潮汐<span class="sort-arrow" id="arr-潮汐_計測"></span></th>
+            <th class="env-th">月相</th>
+            <th class="env-th sort-th" onclick="setSort('水温_計測')">水温℃<span class="sort-arrow" id="arr-水温_計測"></span></th>
+            <th class="env-th">天気</th>
+            <th class="env-th sort-th" onclick="setSort('気温_平均')">気温℃<span class="sort-arrow" id="arr-気温_平均"></span></th>
+            <th class="env-th sort-th" onclick="setSort('風速_最大')">風速m/s<span class="sort-arrow" id="arr-風速_最大"></span></th>
+            <th class="env-th">風向</th>
+            <th class="env-th sort-th" onclick="setSort('最大波高')">波高m<span class="sort-arrow" id="arr-最大波高"></span></th>
+            <th class="env-th">波向</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div class="empty-state" id="empty-state" style="display:none;">
+        <div class="ei">🎣</div>
+        <div>条件に一致するデータが見つかりません</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// 定数
+// ═══════════════════════════════════════════════════
+const CSV_PATH      = '../data/derived/all/fishing_integrated.csv';
+const DD_LIST_WIDTH = 160; // ドロップダウン最小幅(px)
+
+// ソート時に数値比較するキーの集合（毎回生成しないよう定数化）
+const NUM_SORT_KEYS = new Set(['size_cm','weight_kg','気温_平均','水温_計測','風速_最大','最大波高']);
+
+// 月相 → 絵文字マップ（毎回生成しないよう定数化）
+const MOON_MAP = {
+  '新月':'🌑','三日月':'🌒','上弦':'🌓','十日夜':'🌔',
+  '満月':'🌕','十六夜':'🌖','下弦':'🌗','二十六夜':'🌘','晦日':'🌑'
+};
+
+// ═══════════════════════════════════════════════════
+// 状態
+// ═══════════════════════════════════════════════════
+let allRecords = [];
+let filtered   = [];
+let sortKey    = 'date';
+let sortAsc    = false;
+
+// ═══════════════════════════════════════════════════
+// CSV読み込み
+// ═══════════════════════════════════════════════════
+function setLoadingBar(pct){
+  document.getElementById('loading-bar').style.width = pct + '%';
+}
+
+/** RFC4180準拠のCSV1行パーサー */
+function parseCSVLine(line){
+  const result = [];
+  let cur = '', inQ = false;
+  for(let i = 0; i < line.length; i++){
+    const c = line[i];
+    if(c === '"'){
+      if(inQ && line[i+1] === '"'){ cur += '"'; i++; }
+      else inQ = !inQ;
+    } else if(c === ',' && !inQ){
+      result.push(cur); cur = '';
+    } else {
+      cur += c;
+    }
+  }
+  result.push(cur);
+  return result;
+}
+
+async function loadCSV(){
+  setLoadingBar(20);
+  try{
+    const res = await fetch(CSV_PATH + '?_=' + Date.now());
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    setLoadingBar(60);
+
+    const text = await res.text();
+    // BOM除去 + \r\n / \r を \n に統一（Windows形式CSV対応）
+    const lines = text
+      .replace(/^\uFEFF/, '')
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n')
+      .trim()
+      .split('\n')
+      .filter(l => l.trim());
+
+    if(lines.length < 2) throw new Error('データが空です');
+
+    const headers = lines[0].split(',').map(h => h.trim());
+    allRecords = lines.slice(1).map(line => {
+      const cols = parseCSVLine(line);
+      const obj  = {};
+      headers.forEach((h, i) => { obj[h] = (cols[i] || '').trim(); });
+      return obj;
+    });
+
+    // Mroto 拡張: ?boats=muroto1,muroto2 クエリで遊漁船フィルタ
+    const qsBoats = new URLSearchParams(window.location.search).get('boats');
+    if (qsBoats) {
+      const boatSet = new Set(qsBoats.split(',').map(s => s.trim()).filter(Boolean));
+      const before = allRecords.length;
+      allRecords = allRecords.filter(r => boatSet.has(r.boat_id));
+      console.log(`[boat filter] ${qsBoats} → ${allRecords.length}/${before} 件`);
+    }
+
+    setLoadingBar(90);
+    initUI();
+    setLoadingBar(100);
+    setTimeout(() => { document.getElementById('loading-bar').style.display = 'none'; }, 500);
+
+  } catch(e){
+    document.getElementById('loading-msg').innerHTML =
+      `<div style="color:#c0392b;padding:40px;">❌ データ読み込み失敗: ${e.message}<br>
+       <small>fishing_integrated.csv が存在するか確認してください。</small></div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// UI初期化
+// ═══════════════════════════════════════════════════
+function initUI(){
+  document.getElementById('loading-msg').style.display  = 'none';
+  document.getElementById('main-content').style.display = '';
+
+  // 魚種ドロップダウン（五十音順）
+  const species = [...new Set(allRecords.map(r => r.species).filter(Boolean))].sort();
+  buildDDItems('species', species);
+
+  // 釣り場ドロップダウン（件数多い順）
+  const spotCount = {};
+  allRecords.forEach(r => { if(r.spot) spotCount[r.spot] = (spotCount[r.spot] || 0) + 1; });
+  const spots = Object.entries(spotCount).sort((a, b) => b[1] - a[1]).map(e => e[0]);
+  buildDDItems('spot', spots);
+
+  updateStats(allRecords);
+  applyFilters();
+
+  // ドロップダウン外クリックで全閉じ
+  document.addEventListener('click', e => {
+    if(!e.target.closest('.multi-dd')) closeAllDD();
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// チェックボックス型ドロップダウン
+// ═══════════════════════════════════════════════════
+function buildDDItems(type, values){
+  document.getElementById(`dd-${type}-items`).innerHTML =
+    values.map(v =>
+      `<label class="dd-item">
+        <input type="checkbox" value="${escHtml(v)}" onchange="applyFilters()">
+        <span>${escHtml(v)}</span>
+      </label>`
+    ).join('');
+}
+
+function filterDDItems(type, q){
+  const lq = q.toLowerCase();
+  document.querySelectorAll(`#dd-${type}-items .dd-item`).forEach(item => {
+    item.style.display = item.querySelector('span').textContent.toLowerCase().includes(lq) ? '' : 'none';
+  });
+}
+
+function toggleDD(type){
+  const dd = document.getElementById(`dd-${type}`);
+  const wasOpen = dd.classList.contains('open');
+  closeAllDD();
+  if(!wasOpen){
+    dd.classList.add('open');
+    // position:fixed のリストをボタン直下に配置
+    const rect = dd.querySelector('.multi-dd-btn').getBoundingClientRect();
+    const list = dd.querySelector('.multi-dd-list');
+    list.style.top  = (rect.bottom + 4) + 'px';
+    list.style.left = Math.min(rect.left, window.innerWidth - DD_LIST_WIDTH - 10) + 'px';
+  }
+}
+
+function closeAllDD(){
+  document.querySelectorAll('.multi-dd.open').forEach(d => d.classList.remove('open'));
+}
+
+/** チェックをクリアするだけ（applyFilters は呼ばない） */
+function clearDDSilent(type){
+  document.querySelectorAll(`#dd-${type}-items input`).forEach(cb => cb.checked = false);
+}
+
+/** チェックをクリアしてフィルターを再適用 */
+function clearDD(type){
+  clearDDSilent(type);
+  applyFilters();
+}
+
+function getSelectedDD(type){
+  return new Set(
+    [...document.querySelectorAll(`#dd-${type}-items input:checked`)].map(cb => cb.value)
+  );
+}
+
+function updateDDLabel(type, sel){
+  const label = document.getElementById(`dd-${type}-label`);
+  const btn   = document.getElementById(`dd-${type}`).querySelector('.multi-dd-btn');
+  const icon  = type === 'species' ? '🐟' : '📍';
+  const name  = type === 'species' ? '魚種' : '釣り場';
+
+  if(sel.size === 0){
+    label.textContent = `${icon} ${name}`;
+    btn.classList.remove('active');
+  } else if(sel.size === 1){
+    label.textContent = [...sel][0];
+    btn.classList.add('active');
+  } else {
+    label.textContent = `${name}（${sel.size}件）`;
+    btn.classList.add('active');
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// フィルター
+// ═══════════════════════════════════════════════════
+function applyFilters(){
+  // DOM走査は1回ずつまとめて取得
+  const selSpecies = getSelectedDD('species');
+  const selSpots   = getSelectedDD('spot');
+  updateDDLabel('species', selSpecies);
+  updateDDLabel('spot',    selSpots);
+
+  const rawQ    = (document.getElementById('filter-q').value || '').trim();
+  const keywords = rawQ ? rawQ.toLowerCase().split(/\s+/).filter(Boolean) : [];
+
+  filtered = allRecords.filter(r => {
+    // キーワードOR検索（魚種・釣り場・釣法のみ、スペース区切りでいずれか一致）
+    if(keywords.length){
+      const target = [r.species, r.spot, r.method].join(' ').toLowerCase();
+      if(!keywords.some(kw => target.includes(kw))) return false;
+    }
+    // 魚種：選択中のいずれかに該当（OR）
+    if(selSpecies.size && !selSpecies.has(r.species)) return false;
+    // 釣り場：選択中のいずれかに該当（OR）
+    if(selSpots.size && !selSpots.has(r.spot)) return false;
+    return true;
+  });
+
+  document.getElementById('filter-count').textContent =
+    `${filtered.length}件 / ${allRecords.length}件`;
+
+  renderTable();
+}
+
+/** リセット：clearDDSilent で無駄な再描画を防ぎ、最後に1回だけ適用 */
+function resetFilters(){
+  document.getElementById('filter-q').value = '';
+  clearDDSilent('species');
+  clearDDSilent('spot');
+  applyFilters();
+}
+
+// ═══════════════════════════════════════════════════
+// ソート
+// ═══════════════════════════════════════════════════
+function setSort(key){
+  sortAsc = (sortKey === key) ? !sortAsc : (key === 'species');
+  sortKey = key;
+  renderTable();
+}
+
+function updateSortArrows(){
+  document.querySelectorAll('.sort-th').forEach(th => th.classList.remove('active-sort'));
+  document.querySelectorAll('[id^="arr-"]').forEach(el => {
+    const k = el.id.replace('arr-', '');
+    if(k === sortKey){
+      el.textContent = sortAsc ? ' ▲' : ' ▼';
+      el.closest('th').classList.add('active-sort');
+    } else {
+      el.textContent = '';
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// テーブル描画ヘルパー
+// ═══════════════════════════════════════════════════
+const DASH = '<span class="no-data">—</span>';
+
+function escHtml(s){
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/** 値があればそのまま返し、なければダッシュを返す */
+function dash(v){ return v || DASH; }
+
+/** 値があれば単位付きで返し、なければダッシュを返す */
+function withUnit(v, unit){ return v ? v + unit : DASH; }
+
+function tideBadge(t){
+  return t ? `<span class="tide-badge tide-${t}">${t}</span>` : DASH;
+}
+
+function moonBadge(phase){
+  return phase ? `<span class="moon-badge">${MOON_MAP[phase] || ''} ${phase}</span>` : DASH;
+}
+
+function stationBadge(s){
+  return s
+    ? `<span class="st-badge">${escHtml(s)}</span>`
+    : '<span class="st-other">その他</span>';
+}
+
+// ═══════════════════════════════════════════════════
+// テーブル描画
+// ═══════════════════════════════════════════════════
+function renderTable(){
+  updateSortArrows();
+
+  const list = [...filtered].sort((a, b) => {
+    let av = a[sortKey] || '', bv = b[sortKey] || '';
+    if(NUM_SORT_KEYS.has(sortKey)){
+      av = parseFloat(av) || 0;
+      bv = parseFloat(bv) || 0;
+    }
+    if(av < bv) return sortAsc ? -1 :  1;
+    if(av > bv) return sortAsc ?  1 : -1;
+    return 0;
+  });
+
+  const tbody = document.getElementById('tbody');
+  const empty = document.getElementById('empty-state');
+
+  if(!list.length){
+    tbody.innerHTML   = '';
+    empty.style.display = '';
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = list.map(r => {
+    const ec = (r['潮汐_計測'] || r['気温_平均'] || r['水温_計測']) ? 'env-td' : '';
+    return `<tr>
+      <td class="dt">${r.date ? r.date.slice(2).replace(/-/g, '/') : '—'}</td>
+      <td class="sp col-species" style="overflow:hidden;text-overflow:ellipsis;" title="${escHtml(r.species || '')}">${r.species || '—'}</td>
+      <td>${dash(r.size_cm)}</td>
+      <td>${dash(r.weight_kg)}</td>
+      <td>${r.count || 1}</td>
+      <td style="font-size:.78rem;max-width:110px;overflow:hidden;text-overflow:ellipsis;" title="${escHtml(r.method || '')}">${r.method || '—'}</td>
+      <td class="col-spot" title="${escHtml(r.spot || '')}">${r.spot || '—'}</td>
+      <td>${stationBadge(r.nearest_station)}</td>
+      <td class="${ec}">${tideBadge(r['潮汐_計測'])}</td>
+      <td class="${ec}">${moonBadge(r['月相'])}</td>
+      <td class="${ec}">${withUnit(r['水温_計測'], '℃')}</td>
+      <td class="${ec}" style="font-size:.78rem;">${dash(r['天気_計測'])}</td>
+      <td class="${ec}">${withUnit(r['気温_平均'], '℃')}</td>
+      <td class="${ec}">${dash(r['風速_最大'])}</td>
+      <td class="${ec}">${dash(r['風向_計測'])}</td>
+      <td class="${ec}">${dash(r['最大波高'])}</td>
+      <td class="${ec}">${dash(r['波向'])}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════
+// 統計
+// ═══════════════════════════════════════════════════
+function updateStats(recs){
+  let latestDate = '';
+  recs.forEach(r => { if(r.date > latestDate) latestDate = r.date; });
+  document.getElementById('s-total').textContent   = recs.length + '件';
+  document.getElementById('s-updated').textContent = latestDate || '—';
+}
+
+// ═══════════════════════════════════════════════════
+// CSVダウンロード
+// ═══════════════════════════════════════════════════
+function downloadCSV(){
+  if(!filtered.length){ alert('データがありません'); return; }
+  const headers = Object.keys(allRecords[0]);
+  const rows    = [headers.join(',')];
+  filtered.forEach(r => {
+    rows.push(headers.map(h => {
+      const v = r[h] || '';
+      return (v.includes(',') || v.includes('"'))
+        ? '"' + v.replace(/"/g, '""') + '"'
+        : v;
+    }).join(','));
+  });
+  const blob = new Blob(['\uFEFF' + rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = 'fishing_integrated_filtered.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ═══════════════════════════════════════════════════
+// 起動
+// ═══════════════════════════════════════════════════
+loadCSV();
+</script>
+</body>
+</html>

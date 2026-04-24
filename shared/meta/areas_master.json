@@ -1,0 +1,20 @@
+{
+  "version": "1.0.0",
+  "updated_at": "2026-04-24T22:00:00+09:00",
+  "areas": [
+    {
+      "area_id": "muroto",
+      "name": "室戸沖",
+      "prefecture": "高知",
+      "weather_stations": ["室戸"],
+      "current_points": ["室戸沖", "北西"],
+      "condition_csv": "shared/weather/fishing_condition_db.csv",
+      "current_csv": "shared/current/muroto/muroto_offshore_current_all.csv",
+      "ui_dir": "areas/muroto/ui",
+      "master_csv": "areas/muroto/data/master_catch.csv",
+      "derived_dir": "areas/muroto/data/derived",
+      "active": true,
+      "notes": "最初に整備する海域。3艘（muroto1/2/3）が所属"
+    }
+  ]
+}

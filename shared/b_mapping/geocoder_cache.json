@@ -1,0 +1,6 @@
+{
+  "entries": {},
+  "notes": "Nominatim 逆引きキャッシュ。エントリは spot_name → {lat, lng, source, fetched_at, reason}。lat/lng が null のものはネガティブキャッシュ（ヒットなし）。",
+  "updated_at": "2026-04-18T00:00:00+09:00",
+  "version": "1.0.0"
+}

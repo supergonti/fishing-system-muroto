@@ -1,0 +1,33 @@
+{
+  "version": "1.0.0",
+  "updated_at": "2026-04-24T22:00:00+09:00",
+  "boats": [
+    {
+      "boat_id": "muroto1",
+      "boat_name": "室戸1",
+      "area_id": "muroto",
+      "source_values": ["manual", "instagram"],
+      "collection_methods": ["instagram_ocr", "manual_collector"],
+      "active": true,
+      "notes": "既存 fishing-system の collector.html / Instagram OCR 経由データ"
+    },
+    {
+      "boat_id": "muroto2",
+      "boat_name": "室戸2",
+      "area_id": "muroto",
+      "source_values": ["室戸2ブログ"],
+      "collection_methods": ["blog_extract"],
+      "active": true,
+      "notes": "ブログから抽出したデータ（抽出ソフト未整備）"
+    },
+    {
+      "boat_id": "muroto3",
+      "boat_name": "室戸3",
+      "area_id": "muroto",
+      "source_values": ["室戸3ブログ"],
+      "collection_methods": ["blog_extract"],
+      "active": true,
+      "notes": "ブログから抽出したデータ（抽出ソフト未整備）"
+    }
+  ]
+}

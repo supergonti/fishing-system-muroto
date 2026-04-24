@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>遊漁船 釣果ビューア — 海域・船選択</title>
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<style>
+  :root{
+    --bg:#f4f6f9;--surface:#fff;--surface2:#e8eef5;--text:#1e2a3a;--muted:#5b6b7f;
+    --brand:#1a3a6c;--brand-hover:#254c8a;--accent:#2d8f4e;--border:#cfd8e3;
+    --shadow:0 1px 4px rgba(0,0,0,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Hiragino Sans','Meiryo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5}
+  header{background:var(--brand);color:#fff;padding:16px 28px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+  header h1{font-size:1.15rem;font-weight:600;letter-spacing:.04em}
+  header .sub{font-size:.8rem;opacity:.75;margin-top:4px}
+  main{max-width:1100px;margin:0 auto;padding:28px 20px 80px}
+  .panel{background:var(--surface);border-radius:10px;box-shadow:var(--shadow);padding:22px;margin-bottom:22px}
+  .panel h2{font-size:1.02rem;color:var(--brand);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .panel h2::before{content:"";display:inline-block;width:4px;height:18px;background:var(--brand);border-radius:2px}
+  .help{color:var(--muted);font-size:.82rem;margin-bottom:14px}
+  .area-list,.boat-list{display:flex;flex-wrap:wrap;gap:10px}
+  .area-chip,.boat-chip{background:var(--surface2);border:2px solid transparent;border-radius:8px;padding:10px 16px;cursor:pointer;transition:all .18s;user-select:none;font-size:.92rem}
+  .area-chip:hover,.boat-chip:hover{background:#dbe7f2}
+  .area-chip.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .boat-chip input{margin-right:8px;transform:scale(1.1)}
+  .boat-chip.checked{background:#e1ecf8;border-color:var(--brand)}
+  .summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:14px}
+  .summary .box{background:var(--surface2);border-radius:8px;padding:12px 14px}
+  .summary .label{font-size:.72rem;color:var(--muted);letter-spacing:.05em}
+  .summary .value{font-size:1.05rem;font-weight:600;color:var(--text);margin-top:2px;word-break:break-all}
+  .nav-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+  .nav-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;text-decoration:none;color:inherit;transition:all .18s;display:block}
+  .nav-card:hover{border-color:var(--brand);box-shadow:0 2px 10px rgba(26,58,108,.15);transform:translateY(-1px)}
+  .nav-card .title{font-size:1rem;font-weight:600;color:var(--brand);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+  .nav-card .desc{font-size:.82rem;color:var(--muted);line-height:1.6}
+  .nav-card .tag{display:inline-block;background:var(--accent);color:#fff;border-radius:3px;padding:1px 7px;font-size:.68rem;margin-left:6px;vertical-align:middle}
+  .status{padding:8px 12px;background:#fff7e0;border-left:3px solid #e0a030;border-radius:4px;font-size:.85rem;color:#6b5020;margin-bottom:14px}
+  .status.ok{background:#e8f5ee;border-left-color:var(--accent);color:#1e5a32}
+  footer{text-align:center;padding:16px;color:var(--muted);font-size:.75rem}
+  button.btn{background:var(--brand);color:#fff;border:none;border-radius:6px;padding:8px 18px;font-size:.88rem;cursor:pointer;font-weight:600}
+  button.btn:hover{background:var(--brand-hover)}
+  button.btn.outline{background:#fff;color:var(--brand);border:1px solid var(--brand)}
+  button.btn.outline:hover{background:var(--surface2)}
+  .btn-row{display:flex;gap:8px;margin-top:10px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🎣 遊漁船 釣果ビューア</h1>
+  <div class="sub">海域 → 船を選択 → 統合釣果・釣果解析・海流・出船判断を閲覧</div>
+</header>
+
+<main>
+
+  <section class="panel">
+    <h2>① 海域選択</h2>
+    <div class="help">閲覧したい海域を選びます。気象地点・海流ポイントは海域から自動で決まります。</div>
+    <div id="area-list" class="area-list">読み込み中…</div>
+    <div id="area-meta" class="summary" style="display:none"></div>
+  </section>
+
+  <section class="panel" id="boat-panel" style="display:none">
+    <h2>② 遊漁船選択（複数選択可）</h2>
+    <div class="help">1 艘でも、2 艘や 3 艘以上の組み合わせでも選べます。選択された船の釣果のみが各画面に表示されます。</div>
+    <div id="boat-list" class="boat-list"></div>
+    <div class="btn-row">
+      <button class="btn outline" onclick="selectAllBoats(true)">全選択</button>
+      <button class="btn outline" onclick="selectAllBoats(false)">全解除</button>
+    </div>
+    <div id="boat-summary" class="status" style="margin-top:12px"></div>
+  </section>
+
+  <section class="panel" id="nav-panel" style="display:none">
+    <h2>③ 画面を選んで開く</h2>
+    <div class="help">現在の船選択（<code id="current-query">?boats=...</code>）をクエリ付きで渡します。</div>
+    <div class="nav-grid">
+      <a class="nav-card" id="nav-fishingdata" href="#">
+        <div class="title">📊 統合釣果<span class="tag">船フィルタ対応</span></div>
+        <div class="desc">釣果 + 気象（気温・風・波・天気）を横断検索。魚種・釣り場・日付で絞り込み。</div>
+      </a>
+      <a class="nav-card" id="nav-analysis" href="#">
+        <div class="title">🔬 釣果解析<span class="tag">船フィルタ対応</span></div>
+        <div class="desc">月別魚種別の漁獲パターン、条件別の釣果傾向を可視化。</div>
+      </a>
+      <a class="nav-card" id="nav-current" href="#">
+        <div class="title">🌊 海域海流</div>
+        <div class="desc">海域5ポイント（北西・西・室戸沖・東・北東）の海流・水温・塩分。船選択に依存しない海域共通データ。</div>
+      </a>
+      <a class="nav-card" id="nav-forecast" href="#">
+        <div class="title">⛵ 出船判断</div>
+        <div class="desc">5日先までの気象・波・風から出船可否を判定。海域共通データ。</div>
+      </a>
+    </div>
+  </section>
+
+</main>
+
+<footer>fishing-system Mroto — 複数遊漁船・複数海域対応版</footer>
+
+<script>
+// ───────── 状態 ─────────
+let areasData = null;
+let boatsData = null;
+let currentArea = null;
+let selectedBoatIds = new Set();
+
+// ───────── メタデータ読み込み ─────────
+async function loadMeta(){
+  const [areasRes, boatsRes] = await Promise.all([
+    fetch('./shared/meta/areas_master.json?_=' + Date.now()),
+    fetch('./shared/meta/boats_master.json?_=' + Date.now()),
+  ]);
+  if(!areasRes.ok) throw new Error('areas_master.json: HTTP ' + areasRes.status);
+  if(!boatsRes.ok) throw new Error('boats_master.json: HTTP ' + boatsRes.status);
+  areasData = await areasRes.json();
+  boatsData = await boatsRes.json();
+}
+
+// ───────── 海域リスト描画 ─────────
+function renderAreas(){
+  const el = document.getElementById('area-list');
+  const activeAreas = areasData.areas.filter(a => a.active !== false);
+  if(activeAreas.length === 0){
+    el.textContent = '有効な海域がありません。';
+    return;
+  }
+  el.innerHTML = activeAreas.map(a =>
+    `<div class="area-chip" data-area-id="${a.area_id}" onclick="selectArea('${a.area_id}')">${a.name}</div>`
+  ).join('');
+
+  // 海域が 1 つだけなら自動選択
+  if(activeAreas.length === 1){
+    selectArea(activeAreas[0].area_id);
+  }
+}
+
+// ───────── 海域選択 ─────────
+function selectArea(areaId){
+  const area = areasData.areas.find(a => a.area_id === areaId);
+  if(!area) return;
+  currentArea = area;
+
+  document.querySelectorAll('.area-chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.areaId === areaId);
+  });
+
+  // メタ表示
+  const meta = document.getElementById('area-meta');
+  meta.style.display = '';
+  meta.innerHTML = `
+    <div class="box"><div class="label">海域名</div><div class="value">${area.name}（${area.prefecture || ''}）</div></div>
+    <div class="box"><div class="label">気象地点</div><div class="value">${(area.weather_stations || []).join(' / ')}</div></div>
+    <div class="box"><div class="label">海流ポイント</div><div class="value">${(area.current_points || []).join(' / ')}</div></div>
+  `;
+
+  // 船選択初期化（URL クエリ復元 or 全選択）→ 描画
+  const boats = boatsData.boats.filter(b => b.area_id === areaId && b.active !== false);
+  initSelectedBoats(boats);
+  renderBoats();
+  document.getElementById('boat-panel').style.display = '';
+  document.getElementById('nav-panel').style.display = '';
+}
+
+// ───────── 船選択状態の初期化（海域選択時に1度だけ実行） ─────────
+function initSelectedBoats(boats){
+  const qs = new URLSearchParams(location.search).get('boats');
+  if(qs){
+    selectedBoatIds = new Set(qs.split(',').map(s => s.trim()).filter(Boolean));
+  } else {
+    selectedBoatIds = new Set(boats.map(b => b.boat_id));
+  }
+}
+
+// ───────── 船リスト描画（selectedBoatIds を反映するだけ） ─────────
+function renderBoats(){
+  const el = document.getElementById('boat-list');
+  const boats = boatsData.boats.filter(b => b.area_id === currentArea.area_id && b.active !== false);
+  if(boats.length === 0){
+    el.innerHTML = '<em>この海域には登録された船がありません。</em>';
+    return;
+  }
+
+  el.innerHTML = boats.map(b => {
+    const checked = selectedBoatIds.has(b.boat_id);
+    return `<label class="boat-chip ${checked ? 'checked' : ''}">
+      <input type="checkbox" value="${b.boat_id}" ${checked ? 'checked' : ''} onchange="toggleBoat('${b.boat_id}', this)">
+      ${b.boat_name}
+    </label>`;
+  }).join('');
+
+  updateNav();
+}
+
+function toggleBoat(boatId, cb){
+  if(cb.checked) selectedBoatIds.add(boatId);
+  else selectedBoatIds.delete(boatId);
+  cb.closest('.boat-chip').classList.toggle('checked', cb.checked);
+  updateNav();
+}
+
+function selectAllBoats(on){
+  const boats = boatsData.boats.filter(b => b.area_id === currentArea.area_id && b.active !== false);
+  selectedBoatIds = new Set(on ? boats.map(b => b.boat_id) : []);
+  renderBoats();
+}
+
+// ───────── ナビ更新（?boats= 付与） ─────────
+function updateNav(){
+  const ids = Array.from(selectedBoatIds);
+  const boats = boatsData.boats.filter(b => b.area_id === currentArea.area_id && b.active !== false);
+  const sum = document.getElementById('boat-summary');
+  sum.className = 'status' + (ids.length > 0 ? ' ok' : '');
+  sum.textContent = ids.length === 0
+    ? '船を 1 つ以上選んでください。'
+    : `選択中: ${ids.length} / ${boats.length} 艘（${ids.map(id => boats.find(b => b.boat_id === id)?.boat_name).filter(Boolean).join(' + ')}）`;
+
+  const qs = ids.length > 0 ? '?boats=' + ids.join(',') : '';
+  document.getElementById('current-query').textContent = qs || '(未選択)';
+
+  const uiDir = currentArea.ui_dir || `areas/${currentArea.area_id}/ui`;
+  document.getElementById('nav-fishingdata').href = `./${uiDir}/fishingdata.html${qs}`;
+  document.getElementById('nav-analysis').href    = `./${uiDir}/muroto_fishing_analysis.html${qs}`;
+  document.getElementById('nav-current').href     = `./${uiDir}/muroto_offshore_current.html`; // 海域共通
+  document.getElementById('nav-forecast').href    = `./${uiDir}/muroto_fishingforecast.html`;  // 海域共通
+}
+
+// ───────── 起動 ─────────
+(async () => {
+  try {
+    await loadMeta();
+    renderAreas();
+  } catch(e) {
+    document.getElementById('area-list').innerHTML =
+      `<div style="color:#c0392b">❌ メタデータ読み込み失敗: ${e.message}</div>`;
+  }
+})();
+</script>
+
+</body>
+</html>

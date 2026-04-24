@@ -1,0 +1,95 @@
+name: master_catch 変更後の派生CSV再生成 / Emit derived CSVs after master push
+
+# areas/<area_id>/data/master_catch.csv が push されたら：
+#   Step A : 気象・海流の不足日付を差分取得（TODO: area_id パラメトリック化済の
+#            sync_condition_db / sync_current_db に差し替え）
+#   Step B : emit_all で派生 CSV3本（fishing_data / fishing_muroto_v1 /
+#            fishing_integrated）を areas/<area_id>/data/derived/all/ に再生成
+#   Step C : 変更を [skip ci] 付きで commit & push
+#
+# 既存 fishing-system の sync_after_master_push.yml (W6-2/W6-3) を Mroto
+# 構造（areas/*/data/master_catch.csv + shared/weather + shared/current）に
+# 適合化したもの。Step A は将来追加予定、当面は Step B のみ実行。
+
+on:
+  push:
+    paths:
+      - 'areas/**/data/master_catch.csv'
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      area_id:
+        description: '対象 area_id'
+        required: true
+        default: 'muroto'
+
+concurrency:
+  group: sync-after-master-push
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Python 3.11 セットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 対象 area を特定
+        id: detect
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "areas=${{ inputs.area_id }}" >> $GITHUB_OUTPUT
+          else
+            areas=$(git diff --name-only HEAD^ HEAD \
+              | grep -oE 'areas/[^/]+/data/master_catch\.csv' \
+              | awk -F/ '{print $2}' \
+              | sort -u \
+              | tr '\n' ' ')
+            echo "areas=$areas" >> $GITHUB_OUTPUT
+          fi
+
+      - name: emit_all で派生CSV群を再生成
+        run: |
+          set -e
+          for area_id in ${{ steps.detect.outputs.areas }}; do
+            master="areas/$area_id/data/master_catch.csv"
+            out_dir="areas/$area_id/data/derived/all"
+            mkdir -p "$out_dir"
+
+            # areas_master.json から weather / current の CSV パスを取り出す
+            c3=$(python -c "import json;d=json.load(open('shared/meta/areas_master.json'));a=[x for x in d['areas'] if x['area_id']=='$area_id'][0];print(a['condition_csv'])")
+            c4=$(python -c "import json;d=json.load(open('shared/meta/areas_master.json'));a=[x for x in d['areas'] if x['area_id']=='$area_id'][0];print(a['current_csv'])")
+
+            echo "=== $area_id: master=$master c3=$c3 c4=$c4 ==="
+            python -m shared.engines.emit_all \
+              --master "$master" \
+              --c3     "$c3" \
+              --c4     "$c4" \
+              --out-dir "$out_dir"
+          done
+
+      - name: 変更を commit & push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add areas/*/data/derived/ || true
+
+          if git diff --staged --quiet; then
+            echo "派生CSVに変更なし。"
+          else
+            git commit -m "emit派生CSV再生成 (Mroto): $(date -u +%Y-%m-%dT%H:%M:%SZ) [skip ci]"
+            git push
+            echo "コミット＆プッシュ完了"
+          fi

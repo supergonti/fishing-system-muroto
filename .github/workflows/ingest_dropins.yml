@@ -1,0 +1,82 @@
+name: drop_inbox ingest (areas/*/drop_inbox → master_catch.csv)
+
+# areas/<area_id>/drop_inbox/fishing_data_<boat_id>.csv が push されたら：
+#   1. 対象 area を変更ファイルから特定
+#   2. shared.engines.ingest_dropins を実行し master_catch.csv を更新
+#   3. 処理済み CSV を _archived/ に移動（ingest_dropins 内で実施）
+#   4. master_catch.csv の変更を [skip ci = false] で commit して次の
+#      sync_after_master_push.yml を発火させる
+
+on:
+  push:
+    paths:
+      - 'areas/**/drop_inbox/fishing_data_*.csv'
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      area_id:
+        description: '手動実行時の対象 area_id（例: muroto）'
+        required: true
+        default: 'muroto'
+
+concurrency:
+  group: ingest-dropins
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # 変更検出に 1 つ前のコミットが要る
+
+      - name: Python 3.11 セットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 対象 area_id を特定
+        id: detect
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "areas=${{ inputs.area_id }}" >> $GITHUB_OUTPUT
+          else
+            # drop_inbox の変更から area_id を抽出
+            areas=$(git diff --name-only HEAD^ HEAD \
+              | grep -oE 'areas/[^/]+/drop_inbox/fishing_data_[^/]+\.csv' \
+              | awk -F/ '{print $2}' \
+              | sort -u \
+              | tr '\n' ' ')
+            echo "areas=$areas" >> $GITHUB_OUTPUT
+          fi
+          echo "対象 areas: $areas"
+
+      - name: 各 area で ingest_dropins を実行
+        run: |
+          set -e
+          for area_id in ${{ steps.detect.outputs.areas }}; do
+            echo "=== ingest: $area_id ==="
+            python -m shared.engines.ingest_dropins "$area_id"
+          done
+
+      - name: 変更を commit & push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add areas/*/data/master_catch.csv || true
+          git add areas/*/drop_inbox/ || true
+
+          if git diff --staged --quiet; then
+            echo "変更なし。スキップ。"
+          else
+            git commit -m "ingest_dropins: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            git push
+            echo "コミット＆プッシュ完了（次は sync_after_master_push.yml が発火）"
+          fi
