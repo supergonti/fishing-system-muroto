@@ -750,8 +750,16 @@ function loadJsonFile(ev) {
   const file = ev.target.files[0]; if (!file) return;
   const r = new FileReader();
   r.onload = e => {
-    try { initApp(JSON.parse(e.target.result)); document.getElementById('load-result').innerHTML = '<span style="color:var(--green);">✅ 読み込み完了</span>'; }
-    catch { document.getElementById('load-result').innerHTML = '<span style="color:var(--red);">❌ JSONパースエラー</span>'; }
+    try {
+      initApp(JSON.parse(e.target.result));
+      document.getElementById('load-result').innerHTML = '<span style="color:var(--green);">✅ 読み込み完了</span>';
+    } catch (err) {
+      console.error('JSON パースエラー:', err);
+      const lo = document.getElementById('loading-overlay');
+      if (lo) lo.style.display = 'none';
+      document.getElementById('load-result').innerHTML =
+        '<span style="color:var(--red);">❌ JSONパースエラー: ' + (err.message || err) + '</span>';
+    }
   };
   r.readAsText(file, 'utf-8');
 }
@@ -1035,12 +1043,12 @@ function applySPFilter() {
 function resetSPFilter() {
   document.querySelectorAll('#species-cb-list input').forEach(cb => cb.checked = false);
   // toggle state updated via updateToggleState
-  document.querySelectorAll('#area-chips-list input').forEach(cb => { cb.checked = cb.value === '広戸沖'; });
+  document.querySelectorAll('#area-chips-list input').forEach(cb => { cb.checked = cb.value === '室戸沖'; });
   const sel = document.getElementById('species-select');
   if (sel) { [...sel.options].forEach(o => { o.selected = false; }); }
   const areaSel = document.getElementById('area-select');
-  if (areaSel) { [...areaSel.options].forEach(o => { o.selected = o.value === '広戸沖'; }); }
-  updateSPBadges([], ['広戸沖']);
+  if (areaSel) { [...areaSel.options].forEach(o => { o.selected = o.value === '室戸沖'; }); }
+  updateSPBadges([], ['室戸沖']);
   document.getElementById('ov-content').style.display = 'none';
   document.getElementById('ov-empty').style.display = 'block';
   document.getElementById('sp-filter-status').textContent = '↺ リセットしました';
@@ -1306,7 +1314,7 @@ function filterByDateRange(ts, prefix) {
 
 function applyRangePreset(prefix) {
   const sel = document.getElementById(prefix + '-range');
-  const days = parseInt(sel?.value);
+  const days = parseInt(sel?.value, 10);
   if (!days) return;
   const fromEl = document.getElementById(prefix + '-date-from');
   const toEl   = document.getElementById(prefix + '-date-to');
@@ -1484,18 +1492,7 @@ function renderTideTimeline() {
   // ── 潮汐種別×月齢帯 棒グラフ（新月大潮〜満月大潮） ──
   const spArr = Array.isArray(spF) ? spF : (spF ? [spF] : []);
   const hasSPF = spArr.length > 0;
-  const bands = [
-    {label:'若潮(新月側)', check: ag => ag>=10&&ag<12},
-    {label:'中潮(新月側)', check: ag => (ag>=2&&ag<5)||(ag>=8&&ag<10)},
-    {label:'大潮(新月)',   check: ag => ag<2||ag>=28},
-    {label:'中潮(満月側)', check: ag => (ag>=5&&ag<8)||(ag>=19&&ag<22)},
-    {label:'若潮(満月側)', check: ag => ag>=24&&ag<26},
-    {label:'大潮(満月)',   check: ag => ag>=12&&ag<16},
-    {label:'小潮(上弦)',   check: ag => ag>=5&&ag<8},
-    {label:'長潮',         check: ag => (ag>=8&&ag<10)||(ag>=22&&ag<24)},
-    {label:'小潮(下弦)',   check: ag => ag>=19&&ag<22},
-  ];
-  // Simplified: group by 月齢を8等分
+  // 月齢を8等分（潮汐種別と組み合わせて分布表示）
   const eightBands = [
     {label:'新月大潮',     min:28, max:29.53, extra:[[0,2]]},
     {label:'中潮(↑)',     min:2, max:5, extra:[]},
@@ -2093,7 +2090,7 @@ function renderTimeline() {
 // ══════════════════════════════════════════════════════════
 function renderCurrentTimeline() {
   if (!G) return;
-  const arrowStep = parseInt(document.getElementById('ctl-arrow-step').value);
+  const arrowStep = parseInt(document.getElementById('ctl-arrow-step').value, 10);
   const ts        = G.temp_timeseries||[];
   const fil       = filterByDateRange(ts, 'ctl');
   const spF       = getSettingsSpeciesFilter();
@@ -2178,7 +2175,7 @@ function renderMoonTimeline() {
       ctx.save();
       labels.forEach((d,i)=>{
         const entry = fil[i];
-        if(!entry?.月齢==null) return;
+        if (entry?.月齢 == null) return;
         const ag = entry['月齢'];
         let col=null;
         if((ag<=2)||(ag>=12&&ag<=16)||(ag>=28)) col='rgba(0,140,216,.06)';      // 大潮

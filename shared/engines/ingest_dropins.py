@@ -116,7 +116,12 @@ def compute_record_id(boat_id: str, rec: dict) -> str:
 
 
 def compute_entered_at(rec: dict) -> str:
-    """entered_at の fallback: date があれば {date}T00:00:00+09:00、なければ空。"""
+    """entered_at の fallback: date があれば {date}T00:00:00+09:00、なければ空。
+
+    `datetime.now()` を使わない理由: 同じ drop_inbox を再取込しても record_id は
+    uuid5 で変わらないが、`now()` で entered_at が変動すると master のバイト
+    一致が崩れる。冪等性のため固定値（00:00:00 JST）を使う。
+    """
     d = rec.get("date") or ""
     if d:
         return f"{d}T00:00:00+09:00"
@@ -124,7 +129,15 @@ def compute_entered_at(rec: dict) -> str:
 
 
 def read_dropin_csv(path: str) -> list:
-    """drop_inbox CSV を読み、19列 dict list を返す。ヘッダは FISHING_DATA_COLUMNS 準拠。"""
+    """drop_inbox CSV を読み、19列 dict list を返す。ヘッダは FISHING_DATA_COLUMNS 準拠。
+
+    Raises:
+        ValueError: ヘッダ不一致、または行の列数が FISHING_DATA_COLUMNS と
+                    異なる場合（旧実装は silent に pad/truncate していたが、
+                    異常データの取り込みを防ぐため strict に変更）。
+                    呼び出し元 ingest_area の try-except で捕捉され、当該
+                    ファイルだけ errors に記録、他ファイル処理は続行される。
+    """
     with open(path, "r", encoding="utf-8-sig", newline="") as f:
         reader = csv.reader(f)
         header = next(reader)
@@ -132,13 +145,13 @@ def read_dropin_csv(path: str) -> list:
             raise ValueError(
                 f"unexpected header in {path}:\n  got={header}\n  expected={FISHING_DATA_COLUMNS}"
             )
+        expected = len(header)
         rows = []
-        for row in reader:
-            # 長さ調整
-            if len(row) < len(header):
-                row = row + [""] * (len(header) - len(row))
-            elif len(row) > len(header):
-                row = row[: len(header)]
+        for i, row in enumerate(reader, start=2):  # 1行目はヘッダ
+            if len(row) != expected:
+                raise ValueError(
+                    f"{path}: row {i} has {len(row)} cols, expected {expected}"
+                )
             rows.append(dict(zip(header, row)))
     return rows
 
@@ -290,8 +303,17 @@ def ingest_area(
         result["skipped_dup"] += file_dup
 
         if not dry_run:
-            shutil.move(path, os.path.join(archive_dir, fname))
-            result["archived"].append(fname)
+            # archive 移動の失敗は致命的にしない:
+            # - new_records には既に追加済みなので master 書出は実行される
+            # - 次回 ingest 時、同 record_id は existing_ids で skipped_dup になるため
+            #   重複追加されず冪等性を維持できる
+            try:
+                shutil.move(path, os.path.join(archive_dir, fname))
+                result["archived"].append(fname)
+            except (OSError, shutil.Error) as e:
+                result["errors"].append(
+                    f"{fname}: archive move failed (records already queued): {e}"
+                )
 
     if new_records and not dry_run:
         merged = existing_records + new_records

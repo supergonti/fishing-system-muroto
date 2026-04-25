@@ -545,8 +545,11 @@ function buildDashboard() {
 
   const last = allData.find(r => r.date === dates[dates.length - 1] && r.point === '室戸沖');
   if (last) {
-    $.latestSpeed.textContent    = `${last.speed_kn.toFixed(2)} kn`;
-    $.latestSpeedSub.textContent = `${dirLabel(last.direction)}（${last.direction.toFixed(0)}°）`;
+    // 数値変換失敗時は NaN になるため、テーブル側の表示挙動と整合させてダッシュ表示にフォールバック
+    $.latestSpeed.textContent    = isNaN(last.speed_kn) ? '— kn' : `${last.speed_kn.toFixed(2)} kn`;
+    $.latestSpeedSub.textContent = isNaN(last.direction)
+      ? '—'
+      : `${dirLabel(last.direction)}（${last.direction.toFixed(0)}°）`;
   }
 }
 

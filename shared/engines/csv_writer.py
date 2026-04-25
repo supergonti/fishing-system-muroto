@@ -28,7 +28,18 @@ def write_csv_bom_crlf(path: str, headers: list, rows: list) -> None:
     Output:
         BOM (EF BB BF) + UTF-8 テキスト + 各行末 CRLF (0D 0A)
         最終行にも CRLF を付ける（csv.writer のデフォルト動作）
+
+    Raises:
+        ValueError: いずれかの行の列数が headers と一致しない場合（silent corruption 防止）
     """
+    expected = len(headers)
+    for i, row in enumerate(rows):
+        if len(row) != expected:
+            raise ValueError(
+                f"row {i}: {len(row)} cols, expected {expected} "
+                f"(headers[:3]={headers[:3]}, row[:3]={row[:3]})"
+            )
+
     buf = io.StringIO()
     writer = csv.writer(buf, lineterminator="\r\n", quoting=csv.QUOTE_MINIMAL)
     writer.writerow(headers)
