@@ -33,6 +33,7 @@ import sys
 import unicodedata
 import uuid
 from datetime import datetime, timezone, timedelta
+from typing import Literal
 
 from ._schema import (
     MASTER_COLUMNS,
@@ -53,6 +54,10 @@ NAMESPACE_UUID = uuid.uuid5(uuid.NAMESPACE_URL, NAMESPACE_SEED)
 
 # ファイル名規約: fishing_data_<boat_id>.csv
 FILENAME_RE = re.compile(r"^fishing_data_(?P<boat_id>[a-zA-Z0-9_]+)\.csv$")
+
+# replace モードのマーカー: drop_inbox/.replace_<boat_id>
+# . 始まりにすることで FILENAME_RE / `_archived/` ガードと独立に共存
+REPLACE_MARKER_RE = re.compile(r"^\.replace_(?P<boat_id>[a-zA-Z0-9_]+)$")
 
 
 def load_boats_master(path: str) -> dict:
@@ -214,15 +219,110 @@ def write_master(path: str, records: list) -> None:
     write_csv_bom_crlf(path, MASTER_COLUMNS, rows)
 
 
+def backup_master(master_path: str, area_dir: str) -> str:
+    """master_catch.csv を _backups/ に JST タイムスタンプ付きでコピー。
+
+    replace モードで master を破壊的に書換える前のセーフティネット。
+    `git revert <commit>` で master と backup を同時に元に戻せるよう、
+    呼び出し元の workflow が同一コミットに含めることを前提とする。
+
+    Returns:
+      バックアップファイルの絶対パス（master 不存在なら空文字）。
+    """
+    if not os.path.exists(master_path):
+        return ""
+    backup_dir = os.path.join(area_dir, "data", "_backups")
+    os.makedirs(backup_dir, exist_ok=True)
+    ts = datetime.now(JST).strftime("%Y-%m-%d_%H%M%S_jst")
+    backup_path = os.path.join(backup_dir, f"master_catch_{ts}.csv")
+    shutil.copy2(master_path, backup_path)
+    return backup_path
+
+
+def filter_master_excluding_boats(records: list, boat_ids: list) -> tuple:
+    """records から boat_id ∈ boat_ids の行を除外して返す。
+
+    Returns:
+      (kept_records, removed_record_ids)
+    """
+    boat_set = set(boat_ids)
+    kept = []
+    removed_ids = []
+    for r in records:
+        if r.get("boat_id") in boat_set:
+            removed_ids.append(r.get("record_id", ""))
+        else:
+            kept.append(r)
+    return kept, removed_ids
+
+
+def detect_replace_markers(inbox_dir: str) -> list:
+    """drop_inbox 内の .replace_<boat_id> マーカーから boat_id 一覧を返す。"""
+    boats = []
+    if not os.path.isdir(inbox_dir):
+        return boats
+    for name in sorted(os.listdir(inbox_dir)):
+        full = os.path.join(inbox_dir, name)
+        if not os.path.isfile(full):
+            continue
+        m = REPLACE_MARKER_RE.match(name)
+        if m:
+            boats.append(m.group("boat_id"))
+    return boats
+
+
+def check_row_count_ratio(
+    existing_count: int, incoming_count: int, boat_id: str, force: bool
+) -> tuple:
+    """50% ガード + 0行ガード。force でも 0行は override 不可。
+
+    Returns:
+      (passed: bool, message: str)
+    """
+    if existing_count == 0:
+        return True, f"{boat_id}: 既存0行 → 新規追加扱い (incoming={incoming_count})"
+    if incoming_count == 0:
+        return False, (
+            f"{boat_id}: 投入CSVが0行 (既存{existing_count}行) "
+            f"→ 全削除を防止 (force でも override 不可)"
+        )
+    ratio = incoming_count / existing_count
+    if ratio < 0.5 and not force:
+        return False, (
+            f"{boat_id}: 投入{incoming_count}行 < 既存{existing_count}行の50% "
+            f"(ratio={ratio:.2f}) → --force で override 可能"
+        )
+    return True, (
+        f"{boat_id}: 投入{incoming_count}行 / 既存{existing_count}行 "
+        f"(ratio={ratio:.2f})"
+    )
+
+
 def ingest_area(
     area_id: str,
     repo_root: str,
     dry_run: bool = False,
+    mode: Literal["add", "replace"] = "add",
+    force: bool = False,
 ) -> dict:
     """指定 area の drop_inbox を取り込み、master_catch.csv を更新。
 
+    mode:
+      - "add" (デフォルト): 既存挙動。新規 record_id のみ追加、重複は無視。
+      - "replace": drop_inbox/.replace_<boat_id> マーカーで指定された boat_id
+        の行を master から全削除し、投入 CSV の行で置換する（boat_id 単位）。
+        master 書換前に _backups/master_catch_<JST>.csv にバックアップを取る。
+
+    force:
+      - True で行数 50% ガードを override（0 行ガードは override 不可）。
+
     Returns:
-      {"scanned": n, "added": m, "skipped_dup": k, "archived": [...], "errors": [...]}
+      {
+        "area_id", "mode", "replace_boat_ids",
+        "scanned", "added", "removed", "skipped_dup",
+        "archived", "errors", "backup_path", "replace_preview",
+        "total_master_rows"
+      }
     """
     shared_dir = os.path.join(repo_root, "shared")
     boats = load_boats_master(os.path.join(shared_dir, "meta", "boats_master.json"))
@@ -242,6 +342,39 @@ def ingest_area(
     # 既存 master 読み込み
     existing_records, existing_ids = load_master(master_path)
 
+    # マーカー検出（replace モードの対象 boat_id を確定）
+    replace_boat_ids = detect_replace_markers(inbox_dir)
+    replace_set = set(replace_boat_ids)
+
+    result = {
+        "area_id": area_id,
+        "mode": mode,
+        "replace_boat_ids": list(replace_boat_ids),
+        "scanned": 0,
+        "added": 0,
+        "removed": 0,
+        "skipped_dup": 0,
+        "archived": [],
+        "errors": [],
+        "backup_path": "",
+        "replace_preview": [],
+        "total_master_rows": len(existing_records),
+    }
+
+    # mode と マーカー の整合性チェック
+    if mode == "add" and replace_boat_ids:
+        result["errors"].append(
+            f"mode=add だがマーカーが残存: {replace_boat_ids}. "
+            f"--mode replace で実行するか、マーカーを除去してください。"
+        )
+        return result
+    if mode == "replace" and not replace_boat_ids:
+        result["errors"].append(
+            "mode=replace だが drop_inbox に .replace_<boat_id> マーカーがありません。"
+            " マーカーを作成するか --mode add で実行してください。"
+        )
+        return result
+
     # drop_inbox の対象ファイル列挙
     candidates = []
     for name in sorted(os.listdir(inbox_dir)):
@@ -255,14 +388,7 @@ def ingest_area(
             continue
         candidates.append((name, m.group("boat_id"), full))
 
-    result = {
-        "area_id": area_id,
-        "scanned": len(candidates),
-        "added": 0,
-        "skipped_dup": 0,
-        "archived": [],
-        "errors": [],
-    }
+    result["scanned"] = len(candidates)
 
     new_records = []
     seen_in_batch = set()  # このバッチ内での重複
@@ -287,12 +413,37 @@ def ingest_area(
             result["errors"].append(f"{fname}: read failed: {e}")
             continue
 
+        # replace モードかつ対象 boat_id の場合の安全装置
+        if mode == "replace" and boat_id in replace_set:
+            existing_count = sum(
+                1 for r in existing_records if r.get("boat_id") == boat_id
+            )
+            incoming_count = len(raw_rows)
+            passed, msg = check_row_count_ratio(
+                existing_count, incoming_count, boat_id, force
+            )
+            if not passed:
+                result["errors"].append(f"{fname}: {msg}")
+                continue
+            # 削除予定 record_id プレビュー（CI ログ可視化用）
+            for r in existing_records:
+                if r.get("boat_id") == boat_id:
+                    rid = r.get("record_id", "")
+                    if rid:
+                        result["replace_preview"].append(rid)
+
         file_added = 0
         file_dup = 0
         for raw in raw_rows:
             rec = row_to_master_record(raw, boat_id, area_id)
             rid = rec["record_id"]
-            if rid in existing_ids or rid in seen_in_batch:
+            # replace 対象 boat_id では既存 ID 突合をスキップ
+            # （該当 boat_id の既存行は filter で全削除されるため）
+            is_replacing = mode == "replace" and boat_id in replace_set
+            if rid in seen_in_batch:
+                file_dup += 1
+                continue
+            if not is_replacing and rid in existing_ids:
                 file_dup += 1
                 continue
             new_records.append(rec)
@@ -315,11 +466,54 @@ def ingest_area(
                     f"{fname}: archive move failed (records already queued): {e}"
                 )
 
-    if new_records and not dry_run:
+    # replace モードでエラーがある場合は master を書換えない（fail-safe）
+    if mode == "replace" and result["errors"]:
+        return result
+
+    # master 再構築
+    if mode == "replace" and replace_boat_ids:
+        # バックアップ（書換前のセーフティネット）
+        if not dry_run and existing_records:
+            try:
+                bp = backup_master(master_path, area_dir)
+                if bp:
+                    try:
+                        result["backup_path"] = os.path.relpath(
+                            bp, repo_root
+                        ).replace("\\", "/")
+                    except ValueError:
+                        result["backup_path"] = bp
+            except Exception as e:
+                result["errors"].append(f"backup failed: {e}")
+                return result
+        kept, removed_ids = filter_master_excluding_boats(
+            existing_records, replace_boat_ids
+        )
+        result["removed"] = len(removed_ids)
+        merged = kept + new_records
+    else:
         merged = existing_records + new_records
+
+    if not dry_run and (new_records or (mode == "replace" and replace_boat_ids)):
         write_master(master_path, merged)
 
-    result["total_master_rows"] = len(existing_records) + len(new_records)
+    # マーカーの archive
+    if not dry_run and mode == "replace":
+        for boat_id in replace_boat_ids:
+            marker_name = f".replace_{boat_id}"
+            marker_path = os.path.join(inbox_dir, marker_name)
+            if os.path.exists(marker_path):
+                try:
+                    shutil.move(
+                        marker_path, os.path.join(archive_dir, marker_name)
+                    )
+                    result["archived"].append(marker_name)
+                except (OSError, shutil.Error) as e:
+                    result["errors"].append(
+                        f"{marker_name}: marker archive move failed: {e}"
+                    )
+
+    result["total_master_rows"] = len(merged)
     return result
 
 
@@ -339,10 +533,22 @@ def main():
         "--dry-run", action="store_true",
         help="実ファイル書換をせず結果だけ表示"
     )
+    parser.add_argument(
+        "--mode", choices=["add", "replace"], default="add",
+        help="add: 追記のみ (デフォルト) / "
+             "replace: drop_inbox/.replace_<boat_id> で指定された boat_id を全置換"
+    )
+    parser.add_argument(
+        "--force", action="store_true",
+        help="50%%行数ガードを override (0行ガードは override 不可)"
+    )
     args = parser.parse_args()
 
     try:
-        result = ingest_area(args.area_id, args.repo_root, args.dry_run)
+        result = ingest_area(
+            args.area_id, args.repo_root, args.dry_run,
+            mode=args.mode, force=args.force,
+        )
     except Exception as e:
         print(f"[ERROR] {e}", file=sys.stderr)
         sys.exit(2)
