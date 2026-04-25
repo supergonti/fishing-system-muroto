@@ -13,8 +13,6 @@ REM          → [4/5] commit → [5/5] push origin HEAD:main
 REM
 REM 文字コード: Shift-JIS (CP932) で保存。Windows 日本語環境の標準。
 REM             chcp 65001 は使わない (UTF-8 ファイルとの混乱回避のため)。
-REM
-REM 別海域 (awa 等) 追加時は areas/<area_id>/push_dropins.bat として別途複製。
 REM ========================================================================
 
 echo.
@@ -58,30 +56,37 @@ echo [2/5] 3層セキュリティスキャン実行中...
 echo.
 
 REM bash (Git for Windows) を探して PATH に追加
+REM cmd は else if を直接サポートしないので goto でフラットに分岐
 where bash >nul 2>&1
-if !errorlevel! neq 0 (
-  if exist "C:\Program Files\Git\bin\bash.exe" (
-    set "PATH=%PATH%;C:\Program Files\Git\bin"
-  ) else if exist "C:\Program Files\Git\usr\bin\bash.exe" (
-    set "PATH=%PATH%;C:\Program Files\Git\usr\bin"
-  ) else if exist "C:\Program Files (x86)\Git\bin\bash.exe" (
-    set "PATH=%PATH%;C:\Program Files (x86)\Git\bin"
-  ) else (
-    echo ----------------------------------------
-    echo bash (Git for Windows) が見つかりません。
-    echo.
-    echo Git for Windows をインストールするか、
-    echo bash.exe の場所を PATH に追加してください。
-    echo.
-    echo  https://gitforwindows.org/
-    echo ----------------------------------------
-    git reset HEAD areas/muroto/drop_inbox/fishing_data_*.csv > nul 2>&1
-    echo.
-    pause
-    exit /b 1
-  )
+if !errorlevel! == 0 goto scan_run
+
+if exist "C:\Program Files\Git\bin\bash.exe" (
+  set "PATH=%PATH%;C:\Program Files\Git\bin"
+  goto scan_run
+)
+if exist "C:\Program Files\Git\usr\bin\bash.exe" (
+  set "PATH=%PATH%;C:\Program Files\Git\usr\bin"
+  goto scan_run
+)
+if exist "C:\Program Files (x86)\Git\bin\bash.exe" (
+  set "PATH=%PATH%;C:\Program Files (x86)\Git\bin"
+  goto scan_run
 )
 
+echo ----------------------------------------
+echo bash (Git for Windows) が見つかりません。
+echo.
+echo Git for Windows をインストールするか、
+echo bash.exe の場所を PATH に追加してください。
+echo.
+echo  https://gitforwindows.org/
+echo ----------------------------------------
+git reset HEAD areas/muroto/drop_inbox/fishing_data_*.csv > nul 2>&1
+echo.
+pause
+exit /b 1
+
+:scan_run
 REM check_secrets.py の cp932 不具合 (絵文字 UnicodeEncodeError) 回避
 set PYTHONIOENCODING=utf-8
 
