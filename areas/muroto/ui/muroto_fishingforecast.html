@@ -287,7 +287,7 @@ async function loadCriteria(){
     const upd=j._updated||'';
     if(upd) setSt('判定基準: criteria.json ('+upd+') を読み込みました');
     updateLogicPanel();
-  }catch(_){}
+  }catch(e){ console.warn('criteria.json 読込失敗、デフォルト値で続行:', e); }
 }
 
 function updateLogicPanel(){
@@ -387,7 +387,7 @@ async function run(){
     try{
       const res=await fetch('../data/forecast_data.json?_='+Date.now());
       if(res.ok){const j=await res.json();if(j.rows?.length){rawRows=j.rows;updatedAt=j.updated}}
-    }catch(_){}
+    }catch(e){ console.warn('forecast_data.json 読込失敗、API 直接取得へ:', e); }
 
     if(!rawRows.length){
       setSt('APIから直接取得中...');
@@ -438,7 +438,9 @@ function buildRows(raw){
     const waveDir=r.waveDir!=null&&!isNaN(r.waveDir)?Number(r.waveDir):null;
     const windWave=r.windWave!=null&&!isNaN(r.windWave)?Number(r.windWave):null;
     const{score,rawScore,tags}=calcScore(wave,wind,pw,dir,waveDir,windWave);
-    pw=wind;
+    // wind が NaN の場合、次行のトレンド比較が NaN 演算で常に false になり ⑤ が
+    // 意図せずスキップされる。null に正規化することで「不明値」として明示する。
+    pw = isNaN(wind) ? null : wind;
     rows.push({...r,wave,wind,dir,rain,waveDir,windWave,sc:score,rawSc:rawScore,tags});
   });
 }
@@ -517,10 +519,13 @@ function dlCSV(){
     const wdDeg=r.waveDir??'',wdLbl=r.waveDir!=null?d2d(r.waveDir):'',ptags=r.tags.map(t=>t.lbl).join('/');
     return `${r.t},${r.wave.toFixed(2)},${r.wind.toFixed(1)},${r.dir},${d2d(r.dir)},${wdDeg},${wdLbl},${r.rain.toFixed(1)},${r.sc},"${JD[r.sc].l}","${JD[r.sc].notif}","${ptags}"`;
   });
+  // Blob URL は明示的に revoke しないとメモリリーク。ダウンロード完了後に解放する。
+  const url=URL.createObjectURL(new Blob(['\uFEFF'+[hd,...ls].join('\n')],{type:'text/csv;charset=utf-8'}));
   const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob(['\uFEFF'+[hd,...ls].join('\n')],{type:'text/csv;charset=utf-8'}));
+  a.href=url;
   a.download=`muroto_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 </script>
 </body>

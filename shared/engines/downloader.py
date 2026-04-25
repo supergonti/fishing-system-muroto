@@ -213,7 +213,7 @@ def download_cmems(
     try:
         import copernicusmarine as cm
     except ImportError:
-        logger.error("coperniusmarineがインストールされていません: pip install copernicusmarine")
+        logger.error("copernicusmarine がインストールされていません: pip install copernicusmarine")
         return None
 
     dataset_id = _select_cmems_dataset(target_date)
@@ -454,11 +454,10 @@ def check_available_sources() -> dict:
     """
     status = {}
 
-    # OPeNDAP疎通確認
+    # OPeNDAP疎通確認（200系のみを利用可と判定。404/401/403 等は使えない扱い）
     try:
-        import requests
         resp = requests.head(JCOPE2M_OPENDAP_BASE, timeout=5)
-        status["JCOPE OPeNDAP"] = resp.status_code < 500
+        status["JCOPE OPeNDAP"] = 200 <= resp.status_code < 300
     except Exception:
         status["JCOPE OPeNDAP"] = False
 

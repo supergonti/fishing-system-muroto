@@ -642,7 +642,8 @@ function downloadCSV(){
   filtered.forEach(r => {
     rows.push(headers.map(h => {
       const v = r[h] || '';
-      return (v.includes(',') || v.includes('"'))
+      // RFC4180: カンマ・引用符・改行（LF/CR）を含む値は quote 必須
+      return (v.includes(',') || v.includes('"') || v.includes('\n') || v.includes('\r'))
         ? '"' + v.replace(/"/g, '""') + '"'
         : v;
     }).join(','));

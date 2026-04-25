@@ -149,12 +149,12 @@ def check_condition_csv(path: Path) -> CheckResult:
             except StopIteration:
                 return CheckResult(name, False, "空ファイルです")
 
-            # ヘッダー検査
+            # ヘッダー検査（列数 NG なら完全一致は当然 NG なので冗長化を避ける）
             if len(headers) != CONDITION_CSV_EXPECTED_COLS:
                 issues.append(
                     f"ヘッダー列数 {len(headers)} (期待 {CONDITION_CSV_EXPECTED_COLS})"
                 )
-            if headers != CONDITION_CSV_HEADERS:
+            elif headers != CONDITION_CSV_HEADERS:
                 issues.append(f"ヘッダー不一致: {headers[:5]}... (期待 {CONDITION_CSV_HEADERS[:5]}...)")
 
             for lineno, row in enumerate(reader, start=2):
@@ -172,7 +172,7 @@ def check_condition_csv(path: Path) -> CheckResult:
                     issues.append(f"重複キー (日付={date_str}, 地点名={station}) @行{lineno}")
                 seen_keys.add(key)
 
-    except Exception as e:
+    except (OSError, csv.Error) as e:
         return CheckResult(name, False, f"読み込み中にエラー: {e}")
 
     if wrong_col_rows:
@@ -218,7 +218,7 @@ def check_condition_json(path: Path) -> CheckResult:
     except json.JSONDecodeError as e:
         issues.append(f"JSON パースエラー: {e}")
         record_count = 0
-    except Exception as e:
+    except OSError as e:
         return CheckResult(name, False, f"読み込み中にエラー: {e}")
 
     ok = len(issues) == 0
@@ -255,7 +255,7 @@ def check_current_csv(path: Path) -> CheckResult:
                 issues.append(
                     f"ヘッダー列数 {len(headers)} (期待 {CURRENT_CSV_EXPECTED_COLS})"
                 )
-            if headers != CURRENT_CSV_HEADERS:
+            elif headers != CURRENT_CSV_HEADERS:
                 issues.append(f"ヘッダー不一致: {headers[:5]}... (期待 {CURRENT_CSV_HEADERS[:5]}...)")
 
             for lineno, row in enumerate(reader, start=2):
@@ -275,7 +275,7 @@ def check_current_csv(path: Path) -> CheckResult:
                     issues.append(f"重複キー (date={date_str}, point={point}) @行{lineno}")
                 seen_keys.add(key)
 
-    except Exception as e:
+    except (OSError, csv.Error) as e:
         return CheckResult(name, False, f"読み込み中にエラー: {e}")
 
     if wrong_col_rows:
@@ -322,14 +322,15 @@ def check_forecast_json(path: Path) -> CheckResult:
                 issues.append(f"'rows' が配列ではない (type={type(data['rows']).__name__})")
             else:
                 rows = data["rows"]
-                for i, r in enumerate(rows[:1]):  # 先頭行で主要キーの存在確認
+                if rows:  # 先頭行で主要キーの存在確認
+                    r = rows[0]
                     for k in ("t", "wave", "wind", "dir"):
                         if k not in r:
                             issues.append(f"rows[0] にキー '{k}' がありません")
 
     except json.JSONDecodeError as e:
         issues.append(f"JSON パースエラー: {e}")
-    except Exception as e:
+    except OSError as e:
         return CheckResult(name, False, f"読み込み中にエラー: {e}")
 
     ok = len(issues) == 0

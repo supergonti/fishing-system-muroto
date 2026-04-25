@@ -130,3 +130,18 @@ def upgrade_record_v1_to_v2(rec: dict, boat_id: str = "", area_id: str = "") -> 
     new_rec["boat_id"] = boat_id
     new_rec["area_id"] = area_id
     return new_rec
+
+
+def diagnose_schema_mismatch(header: list) -> dict:
+    """header と既知スキーマの差分を返す診断ヘルパー（デバッグ用）。
+
+    detect_master_schema() が "unknown" を返す状況で、どの列が欠落／余剰かを
+    特定するために使う純粋追加関数。既存呼び出し元には影響しない。
+    """
+    return {
+        "detected": detect_master_schema(header),
+        "expected_v2": list(MASTER_COLUMNS),
+        "missing": [c for c in MASTER_COLUMNS if c not in header],
+        "extra":   [c for c in header if c not in MASTER_COLUMNS],
+        "length_diff": len(header) - len(MASTER_COLUMNS),
+    }

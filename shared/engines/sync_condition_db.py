@@ -364,8 +364,14 @@ def read_master_dates(path: Path) -> set[str]:
 
 
 def read_existing_per_station(path: Path) -> dict[str, set[str]]:
-    """fishing_condition_db.csv から (地点名 → set(日付)) のマップを返す"""
-    out: dict[str, set[str]] = {s["name"]: set() for s in STATIONS}
+    """fishing_condition_db.csv から (地点名 → set(日付)) のマップを返す。
+
+    STATIONS に登録のない地点名は無視する（CSV に typo や旧地点名が混入していても
+    plan 計算に影響しない）。下流の `for s in STATIONS:` ループが STATIONS の地点
+    のみを参照するため、外れ値を保持してもメモリの無駄になるだけ。
+    """
+    known_stations = {s["name"] for s in STATIONS}
+    out: dict[str, set[str]] = {name: set() for name in known_stations}
     if not path.exists():
         return out
     with path.open("r", encoding="utf-8-sig", newline="") as f:
@@ -379,7 +385,9 @@ def read_existing_per_station(path: Path) -> dict[str, set[str]]:
             d, st = row[0], row[1]
             if not d or not st:
                 continue
-            out.setdefault(st, set()).add(d)
+            if st not in known_stations:
+                continue  # 未知地点（typo/旧名）は無視
+            out[st].add(d)
     return out
 
 
@@ -547,6 +555,8 @@ def fetch_marine_for_station(station: dict, from_date: str, to_date: str) -> dic
 
 def fetch_water_for_station(station: dict, from_date: str, to_date: str) -> dict[str, dict]:
     # まず時間別 → 失敗時は日別フォールバック
+    # fetch_json は RuntimeError、parse_water_json_hourly は KeyError/ValueError を出し得る。
+    # それ以外（KeyboardInterrupt 等）は伝搬させる。
     try:
         url = marine_url(station["lat"], station["lng"], from_date, to_date,
                          "hourly=sea_surface_temperature")
@@ -554,7 +564,7 @@ def fetch_water_for_station(station: dict, from_date: str, to_date: str) -> dict
         result = parse_water_json_hourly(payload)
         if result:
             return result
-    except Exception as e:
+    except (RuntimeError, KeyError, ValueError) as e:
         log(f"  hourly 水温失敗 → 日別フォールバック: {e}")
     url2 = marine_url(station["lat"], station["lng"], from_date, to_date,
                       "daily=sea_surface_temperature_mean")

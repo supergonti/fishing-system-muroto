@@ -23,7 +23,10 @@ JST = timezone(timedelta(hours=9))
 
 
 def normalize_import_csv(
-    input_row: dict, mapping: dict, source_label: str = "import:csv_v5.5"
+    input_row: dict,
+    mapping: dict,
+    source_label: str = "import:csv_v5.5",
+    entered_at: str | None = None,
 ) -> dict:
     """
     CSV 1行を 26列スキーマ dict に正規化。
@@ -33,21 +36,25 @@ def normalize_import_csv(
         mapping: 元列名 → マスター列名 のマッピング辞書
                  例: {"釣行日": "date", "魚種": "species", ...}
         source_label: source 列に書く識別子（デフォルト 'import:csv_v5.5'）
+        entered_at: バッチ共通のISO8601 JSTタイムスタンプ。
+                    None の場合は呼び出し時刻を使う（後方互換）。
+                    バッチ内で同一値を渡せば再取込時のバイト一致が保ちやすい。
 
     Returns:
         Aマスター 26 列の dict
     """
-    # mapping を逆引き：マスター列名 → 入力列名
     rec = empty_master_record()
     extra_memo = []
 
+    # マスター列名 → 入力列名 の逆引き辞書を1回だけ構築（O(M)）。
+    # 旧実装の _get() 内ループを廃し、O(N×M) → O(N+M) に短縮。
+    # 重複 dst がある場合の挙動は旧実装（最初に一致した src）と同等
+    # （Python 3.7+ の dict 挿入順保持で再現性あり）。
+    inv_mapping = {dst: src for src, dst in mapping.items()}
+
     def _get(master_col: str):
-        # マスター列名から、対応する入力列名を探す
-        for src, dst in mapping.items():
-            if dst == master_col:
-                return input_row.get(src)
-        # マッピングなし
-        return None
+        src = inv_mapping.get(master_col)
+        return input_row.get(src) if src is not None else None
 
     rec["species"] = _norm_str(_get("species"))
     rec["bait"] = _norm_str(_get("bait"))
@@ -81,7 +88,9 @@ def normalize_import_csv(
 
     rec["source"] = source_label
     rec["record_id"] = str(uuid.uuid4())
-    rec["entered_at"] = datetime.now(JST).strftime("%Y-%m-%dT%H:%M:%S+09:00")
+    rec["entered_at"] = entered_at or datetime.now(JST).strftime(
+        "%Y-%m-%dT%H:%M:%S+09:00"
+    )
     rec["source_detail"] = _norm_str(_get("source_detail"))
     rec["prompt_version"] = ""
     rec["confidence"] = ""
