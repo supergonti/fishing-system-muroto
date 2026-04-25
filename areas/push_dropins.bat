@@ -9,7 +9,7 @@ REM 配置:    areas/push_dropins.bat
 REM 使い方:  drop_inbox に fishing_data_^<boat_id^>.csv を置いてダブルクリック
 REM 対応:    areas/*/drop_inbox/fishing_data_*.csv (複数海域 OK)
 REM 動作:    [1/5] git add → [2/5] 3層スキャン → [3/5] メッセージ生成
-REM          → [4/5] commit → [5/5] push
+REM          → [4/5] commit → [5/5] push origin HEAD:main
 REM
 REM 文字コード: Shift-JIS (CP932) で保存。Windows 日本語環境の標準。
 REM             chcp 65001 は使わない (UTF-8 ファイルとの混乱回避のため)。
@@ -52,6 +52,35 @@ echo.
 
 echo [2/5] 3層セキュリティスキャン実行中...
 echo.
+
+REM bash (Git for Windows) を探して PATH に追加
+where bash >nul 2>&1
+if !errorlevel! neq 0 (
+  if exist "C:\Program Files\Git\bin\bash.exe" (
+    set "PATH=%PATH%;C:\Program Files\Git\bin"
+  ) else if exist "C:\Program Files\Git\usr\bin\bash.exe" (
+    set "PATH=%PATH%;C:\Program Files\Git\usr\bin"
+  ) else if exist "C:\Program Files (x86)\Git\bin\bash.exe" (
+    set "PATH=%PATH%;C:\Program Files (x86)\Git\bin"
+  ) else (
+    echo ----------------------------------------
+    echo bash (Git for Windows) が見つかりません。
+    echo.
+    echo Git for Windows をインストールするか、
+    echo bash.exe の場所を PATH に追加してください。
+    echo.
+    echo  https://gitforwindows.org/
+    echo ----------------------------------------
+    git reset HEAD areas/*/drop_inbox/fishing_data_*.csv > nul 2>&1
+    echo.
+    pause
+    exit /b 1
+  )
+)
+
+REM check_secrets.py の cp932 不具合 (絵文字 UnicodeEncodeError) 回避
+set PYTHONIOENCODING=utf-8
+
 bash "C:/Claude/tools/scan_3layer.sh" "%CD%"
 if !errorlevel! neq 0 (
   echo.
@@ -112,15 +141,15 @@ if !errorlevel! neq 0 (
 )
 
 echo.
-echo [5/5] push 実行中...
-git push
+echo [5/5] push 実行中 (origin HEAD:main)...
+git push origin HEAD:main
 if !errorlevel! neq 0 (
   echo.
   echo ----------------------------------------
   echo push に失敗しました。
   echo 認証エラーまたはネットワーク不調の可能性があります。
   echo 認証情報を確認後、再実行してください。
-  echo (commit は完了しているため、git push のみで再試行可)
+  echo (commit は完了しているため、push のみで再試行可)
   echo ----------------------------------------
   echo.
   pause
