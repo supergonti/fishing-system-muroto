@@ -11,6 +11,7 @@ on:
   push:
     paths:
       - 'areas/**/drop_inbox/fishing_data_*.csv'
+      - 'areas/**/drop_inbox/.replace_*'
     branches:
       - main
   workflow_dispatch:
@@ -19,6 +20,11 @@ on:
         description: '手動実行時の対象 area_id（例: muroto）'
         required: true
         default: 'muroto'
+      force:
+        description: '50%行数ガードを override（0行ガードは override 不可）'
+        required: false
+        type: boolean
+        default: false
 
 concurrency:
   group: ingest-dropins
@@ -48,9 +54,9 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "areas=${{ inputs.area_id }}" >> $GITHUB_OUTPUT
           else
-            # drop_inbox の変更から area_id を抽出
+            # drop_inbox の変更から area_id を抽出（CSV と replace マーカーの両方）
             areas=$(git diff --name-only HEAD^ HEAD \
-              | grep -oE 'areas/[^/]+/drop_inbox/fishing_data_[^/]+\.csv' \
+              | grep -oE 'areas/[^/]+/drop_inbox/(fishing_data_[^/]+\.csv|\.replace_[^/]+)' \
               | awk -F/ '{print $2}' \
               | sort -u \
               | tr '\n' ' ')
@@ -58,12 +64,33 @@ jobs:
           fi
           echo "対象 areas: $areas"
 
+      - name: replace モード判定（マーカー検出）
+        id: mode_detect
+        run: |
+          modes=""
+          for area_id in ${{ steps.detect.outputs.areas }}; do
+            inbox="areas/$area_id/drop_inbox"
+            if ls "$inbox"/.replace_* 2>/dev/null | grep -q .; then
+              modes="$modes $area_id:replace"
+            else
+              modes="$modes $area_id:add"
+            fi
+          done
+          echo "modes=$modes" >> $GITHUB_OUTPUT
+          echo "判定結果: $modes"
+
       - name: 各 area で ingest_dropins を実行
         run: |
           set -e
-          for area_id in ${{ steps.detect.outputs.areas }}; do
-            echo "=== ingest: $area_id ==="
-            python -m shared.engines.ingest_dropins "$area_id"
+          force_flag=""
+          if [ "${{ inputs.force }}" = "true" ]; then
+            force_flag="--force"
+          fi
+          for entry in ${{ steps.mode_detect.outputs.modes }}; do
+            area_id="${entry%%:*}"
+            mode="${entry##*:}"
+            echo "=== ingest: $area_id (mode=$mode${force_flag:+, force}) ==="
+            python -m shared.engines.ingest_dropins "$area_id" --mode "$mode" $force_flag
           done
 
       - name: 変更を commit & push
@@ -71,6 +98,7 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add areas/*/data/master_catch.csv || true
+          git add areas/*/data/_backups/ || true
           git add areas/*/drop_inbox/ || true
 
           if git diff --staged --quiet; then
