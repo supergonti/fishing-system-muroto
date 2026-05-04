@@ -1,0 +1,101 @@
+# NOTE (T-E, 2026-05-04): golden test (tests/golden_match_test.py) が
+# Muroto に未整備のため、本 workflow は雛形（emit_all + validate_all のみ）。
+# golden 整備後に "Run golden match" ステップを enable すること。
+#
+# 旧 fishing-system の rebuild_master.yml (W3-2 §4.3 / W3-3 §9.4 準拠) を
+# Muroto 構造（areas/<area_id>/data/master_catch.csv + shared/weather +
+# shared/current/<area_id>）に適合化。週次（月曜 09:00 JST）で
+# master_catch.csv → 派生CSV を再生成し、整合性検査のみ非破壊で実行する。
+
+name: Rebuild master (weekly integrity check, Mon 09:00 JST)
+
+on:
+  schedule:
+    - cron: '0 0 * * 1'   # 月曜 00:00 UTC = 09:00 JST
+  workflow_dispatch:       # 手動実行可
+    inputs:
+      area_id:
+        description: '対象 area_id'
+        required: true
+        default: 'muroto'
+
+concurrency:
+  group: rebuild-master-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python 3.11 セットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: 依存関係をインストール (requirements.txt があれば)
+        run: |
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            echo "No requirements.txt; standard library only."
+          fi
+
+      # -----------------------------------------------------------------
+      # Step A: 新アーキから互換出力を生成（非破壊）
+      #   shared.engines.emit_all は fishing_data / muroto_v1 / integrated の
+      #   3本を一括生成。--out-dir .ci_out に書き、areas/<area_id>/data/derived/
+      #   配下のゴールデンと比較（data/ は触らない）。
+      # -----------------------------------------------------------------
+      - name: emit_all で互換出力を .ci_out に生成
+        run: |
+          set -e
+          area_id="${{ github.event.inputs.area_id || 'muroto' }}"
+          mkdir -p .ci_out
+          python -m shared.engines.emit_all \
+            --master  "areas/${area_id}/data/master_catch.csv" \
+            --c3      "shared/weather/fishing_condition_db.csv" \
+            --c4      "shared/current/${area_id}/${area_id}_offshore_current_all.csv" \
+            --out-dir ".ci_out"
+
+      # -----------------------------------------------------------------
+      # Step B: ゴールデン比較テスト
+      #   TODO: golden test を Muroto に整備 → enable
+      #   (tests/golden_match_test.py を整備 + golden データ採取後、
+      #    `if: false` を外す or `if: ${{ true }}` にする)
+      # -----------------------------------------------------------------
+      - name: ゴールデン byte-match 比較 (DISABLED until golden test is wired)
+        if: false
+        run: |
+          python -m tests.golden_match_test
+
+      # -----------------------------------------------------------------
+      # Step C: 破損検査（shared.engines.validate_all を Muroto 構造で実行）
+      # -----------------------------------------------------------------
+      - name: 全データファイルの破損検査
+        run: |
+          set -e
+          area_id="${{ github.event.inputs.area_id || 'muroto' }}"
+          python -m shared.engines.validate_all \
+            --condition-csv  "shared/weather/fishing_condition_db.csv" \
+            --condition-json "shared/weather/fishing_condition_db.json" \
+            --current-csv    "shared/current/${area_id}/${area_id}_offshore_current_all.csv" \
+            --forecast-json  "areas/${area_id}/data/forecast_data.json"
+
+      # -----------------------------------------------------------------
+      # 失敗時: 生成物をアーティファクトとして残し、ローカル再現を助ける
+      # （commit はしない — 本 workflow は整合性検査専用、非破壊）
+      # -----------------------------------------------------------------
+      - name: 失敗時に生成物をアップロード
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emit_all-output-${{ github.run_id }}
+          path: .ci_out/
+          if-no-files-found: warn
+          retention-days: 14
