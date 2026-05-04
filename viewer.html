@@ -45,6 +45,9 @@
   button.btn.outline{background:#fff;color:var(--brand);border:1px solid var(--brand)}
   button.btn.outline:hover{background:var(--surface2)}
   .btn-row{display:flex;gap:8px;margin-top:10px}
+  .btn-confirm{background:linear-gradient(135deg,var(--brand) 0%,#254c8a 100%);color:#fff;border:none;border-radius:8px;padding:14px 36px;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(26,58,108,.3);transition:all .18s;letter-spacing:.05em}
+  .btn-confirm:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(26,58,108,.4)}
+  .btn-confirm:disabled{background:#9ca3b0;cursor:not-allowed}
 </style>
 </head>
 <body>
@@ -72,6 +75,11 @@
       <button class="btn outline" onclick="selectAllBoats(false)">全解除</button>
     </div>
     <div id="boat-summary" class="status" style="margin-top:12px"></div>
+    <div class="confirm-row" style="margin-top:14px;text-align:center">
+      <button type="button" class="btn-confirm" onclick="goToCatchDB()">
+        <span aria-hidden="true">✅</span> 確定して釣果DBを開く
+      </button>
+    </div>
   </section>
 
   <section class="panel" id="nav-panel" style="display:none">
@@ -171,7 +179,8 @@ function initSelectedBoats(boats){
   if(qs){
     selectedBoatIds = new Set(qs.split(',').map(s => s.trim()).filter(Boolean));
   } else {
-    selectedBoatIds = new Set(boats.map(b => b.boat_id));
+    const defaultBoat = boats.find(b => b.boat_id === 'muroto1') || boats[0];
+    selectedBoatIds = new Set(defaultBoat ? [defaultBoat.boat_id] : []);
   }
 }
 
@@ -227,6 +236,9 @@ function updateNav(){
   document.getElementById('nav-current').href     = `./${uiDir}/muroto_offshore_current.html`; // 海域共通
   document.getElementById('nav-forecast').href    = `./${uiDir}/muroto_fishingforecast.html`;  // 海域共通
 }
+
+// ───────── 確定ボタン → 釣果DBへ ─────────
+function goToCatchDB(){const a=document.getElementById('nav-fishingdata');if(!a)return;window.location.href=a.href;}
 
 // ───────── 起動 ─────────
 (async () => {
