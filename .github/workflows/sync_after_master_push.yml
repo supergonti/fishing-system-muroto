@@ -1,15 +1,20 @@
 name: master_catch 変更後の派生CSV再生成 / Emit derived CSVs after master push
 
 # areas/<area_id>/data/master_catch.csv が push されたら：
-#   Step A : 気象・海流の不足日付を差分取得（TODO: area_id パラメトリック化済の
-#            sync_condition_db / sync_current_db に差し替え）
+#   Step A : 気象データの不足日付を Open-Meteo から差分取得
+#            （sync_condition_db を Muroto 構造の shared/weather/ に対して実行）
 #   Step B : emit_all で派生 CSV3本（fishing_data / fishing_muroto_v1 /
 #            fishing_integrated）を areas/<area_id>/data/derived/all/ に再生成
+#   Step D : analyze_engine で analysis_result.json と各船別 analysis_muroto*.json
+#            を再生成（HTML 埋込はスキップ＝--no-html）
 #   Step C : 変更を [skip ci] 付きで commit & push
 #
-# 既存 fishing-system の sync_after_master_push.yml (W6-2/W6-3) を Muroto
+# 旧 fishing-system の sync_after_master_push.yml (W6-2/W6-3) を Muroto
 # 構造（areas/*/data/master_catch.csv + shared/weather + shared/current）に
-# 適合化したもの。Step A は将来追加予定、当面は Step B のみ実行。
+# 適合化したもの。
+#
+# 注: 旧版にあった海流差分取得 (sync_current_db) は本ワークフローでは扱わない
+#     （別途 update-forecast/cron で扱う想定）。
 
 on:
   push:
@@ -60,6 +65,22 @@ jobs:
             echo "areas=$areas" >> $GITHUB_OUTPUT
           fi
 
+      # --- Step A: 気象データの不足日付を Open-Meteo から差分取得 ---
+      # 失敗時は exit 1 で Actions を停止（master_catch だけ push された状態で止まる）
+      - name: 気象データ差分取得 (sync_condition_db)
+        run: |
+          set -e
+          for area_id in ${{ steps.detect.outputs.areas }}; do
+            master="areas/$area_id/data/master_catch.csv"
+            condition=$(python -c "import json;d=json.load(open('shared/meta/areas_master.json'));a=[x for x in d['areas'] if x['area_id']=='$area_id'][0];print(a['condition_csv'])")
+
+            echo "=== sync_condition_db $area_id: master=$master condition=$condition ==="
+            python -m shared.engines.sync_condition_db \
+              --master    "$master" \
+              --condition "$condition"
+          done
+
+      # --- Step B: emit_all で派生CSV群を再生成 ---
       - name: emit_all で派生CSV群を再生成
         run: |
           set -e
@@ -80,16 +101,73 @@ jobs:
               --out-dir "$out_dir"
           done
 
+      # --- Step D: analyze_engine で解析結果を再生成 ---
+      # 全合算 + 各船別（muroto1/2/3）の 4 本を生成。
+      # 各船別 derived CSV は分割していないため、共通の fishing_muroto_v1.csv を
+      # --boats フラグで boat_id 絞り込みすることで個別 JSON を出力する。
+      # HTML 埋込更新は本ワークフローでは扱わない（--no-html）。
+      - name: 解析結果を再生成 (analyze_engine, all + muroto1/2/3)
+        run: |
+          set -e
+          for area_id in ${{ steps.detect.outputs.areas }}; do
+            db1="areas/$area_id/data/derived/all/fishing_muroto_v1.csv"
+            db2=$(python -c "import json;d=json.load(open('shared/meta/areas_master.json'));a=[x for x in d['areas'] if x['area_id']=='$area_id'][0];print(a['current_csv'])")
+            db3=$(python -c "import json;d=json.load(open('shared/meta/areas_master.json'));a=[x for x in d['areas'] if x['area_id']=='$area_id'][0];print(a['condition_csv'])")
+            analysis_dir="areas/$area_id/data/analysis"
+            mkdir -p "$analysis_dir"
+
+            # 全船統合
+            echo "=== analyze_engine $area_id all ==="
+            python -m shared.engines.analyze_engine \
+              --db1 "$db1" \
+              --db2 "$db2" \
+              --db3 "$db3" \
+              --out "$analysis_dir/analysis_result.json" \
+              --no-html
+
+            # muroto1
+            echo "=== analyze_engine $area_id muroto1 ==="
+            python -m shared.engines.analyze_engine \
+              --db1 "$db1" \
+              --db2 "$db2" \
+              --db3 "$db3" \
+              --out "$analysis_dir/analysis_muroto1.json" \
+              --boats muroto1 \
+              --no-html
+
+            # muroto2
+            echo "=== analyze_engine $area_id muroto2 ==="
+            python -m shared.engines.analyze_engine \
+              --db1 "$db1" \
+              --db2 "$db2" \
+              --db3 "$db3" \
+              --out "$analysis_dir/analysis_muroto2.json" \
+              --boats muroto2 \
+              --no-html
+
+            # muroto3
+            echo "=== analyze_engine $area_id muroto3 ==="
+            python -m shared.engines.analyze_engine \
+              --db1 "$db1" \
+              --db2 "$db2" \
+              --db3 "$db3" \
+              --out "$analysis_dir/analysis_muroto3.json" \
+              --boats muroto3 \
+              --no-html
+          done
+
       - name: 変更を commit & push
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add areas/*/data/derived/ || true
+          git add areas/*/data/analysis/ || true
+          git add shared/weather/fishing_condition_db.csv || true
 
           if git diff --staged --quiet; then
-            echo "派生CSVに変更なし。"
+            echo "派生CSV/解析結果に変更なし。"
           else
-            git commit -m "emit派生CSV再生成 (Muroto): $(date -u +%Y-%m-%dT%H:%M:%SZ) [skip ci]"
+            git commit -m "emit派生CSV+解析再生成 (Muroto): $(date -u +%Y-%m-%dT%H:%M:%SZ) [skip ci]"
             git push
             echo "コミット＆プッシュ完了"
           fi
