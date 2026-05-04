@@ -127,14 +127,14 @@
 
 ## 9. 完了基準
 
-- ☐ T-1 viewer.html: 室戸1 限定 + 確定ボタン反映
-- ☐ T-2 fishingdata.html: 魚種/釣り場 DDL グループ式
-- ☐ T-3 muroto_fishing_analysis.html: 5 タブの仕様反映
-- ☐ T-4 muroto_offshore_current.html: ダッシュボード初期折りたたみ
-- ☐ 5 コミット push 済 + scan_3layer.sh exit 0
-- ☐ 公開ページ 4 画面で改修内容を curl 検証
-- ☐ 計画書 §11 に実施結果サマリ追記
-- ☐ ssh-agent から個人鍵削除
+- ☑ T-1 viewer.html: 室戸1 限定 + 確定ボタン反映
+- ☑ T-2 fishingdata.html: 魚種/釣り場 DDL グループ式
+- ☑ T-3 muroto_fishing_analysis.html: 5 タブの仕様反映
+- ☑ T-4 muroto_offshore_current.html: ダッシュボード初期折りたたみ
+- ☑ 5 コミット push 済 + scan_3layer.sh exit 0
+- ☑ 公開ページ 4 画面で改修内容を curl 検証
+- ☑ 計画書 §11 に実施結果サマリ追記
+- ☐ ssh-agent から個人鍵削除（最後に実施）
 
 ---
 
@@ -142,5 +142,54 @@
 
 - 自動更新 workflow 移植: `docs/plans/20260504_workflow_migration.md`
 - 共通規約: `docs/COWORK_HANDOFF_GUIDE.md`
+
+---
+
+## 11. 実施結果サマリ
+
+### 実施日時 (JST)
+- 開始: 2026-05-04 23:35
+- Wave 1 完了 + push: 2026-05-05 00:01
+- 公開ページ反映確認: 2026-05-05 00:04
+
+### コミット SHA（古い順）
+| # | SHA | 内容 |
+|---|---|---|
+| #1 | `3a8c0e9` | feat(ui): viewer.html 初期選択を室戸1限定+確定ボタン追加 (T-1) |
+| #2 | `ec692b7` | feat(ui): 釣果DB の魚種・釣り場ドロップダウンをグループ式に変更 (T-2) |
+| #3 | `6d275f3` | feat(ui): 解析DB の魚種解析+TL系タブを改修 (T-3) |
+| #4 | `6624e8f` | feat(ui): 潮流ダッシュボードを初期折りたたみに変更 (T-4) |
+| #5 | `aea54f4` | docs(plan,guide): UI改修Phase1計画書とL-017追記 |
+
+### 変更行数
+- viewer.html: +13 / -1
+- fishingdata.html: +219 / -11
+- muroto_fishing_analysis.html: +171 / -114
+- muroto_offshore_current.html: +4 / -4
+- docs（計画書 + ガイド）: +147 / -0
+- 合計: +554 / -130
+
+### 公開ページ反映確認（curl, 2026-05-05 00:04 JST 時点）
+| 画面 | 確認キーワード | ヒット数 |
+|---|---|---|
+| viewer.html | btn-confirm / goToCatchDB / muroto1 | 6 ✅ |
+| fishingdata.html | SPECIES_GROUPS / SPOT_GROUPS / buildGroupedCBList / cb-group | 42 ✅ |
+| muroto_fishing_analysis.html | range-period / tideStack / stack: / tl-date-end | 16 ✅ |
+| muroto_offshore_current.html | dashboard:false / aria-expanded=false / collapsed | 全反映 ✅ |
+
+### Pages デプロイ
+- run 25326487626 → success（headSha: aea54f4）
+
+### Gonti さんへ目視確認のお願い
+- https://supergonti.github.io/fishing-system-muroto/viewer.html
+- https://supergonti.github.io/fishing-system-muroto/areas/muroto/ui/fishingdata.html
+- https://supergonti.github.io/fishing-system-muroto/areas/muroto/ui/muroto_fishing_analysis.html
+- https://supergonti.github.io/fishing-system-muroto/areas/muroto/ui/muroto_offshore_current.html
+
+### 方針 D の使用状況
+- 0 リトライで完遂（同一エラーループは発生せず、4 ワーカー全員が初回成功）
+
+### Gonti さんへのお願い（片付け）
+- 個人鍵 ssh-agent からの削除: `ssh-add -d ~/.ssh/id_ed25519_github`
 
 ---
