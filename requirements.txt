@@ -1,0 +1,19 @@
+# fishing-system-muroto requirements
+#
+# 用途:
+#   - GitHub Actions の actions/setup-python@v5 で cache: 'pip' を機能させる
+#   - workflow 内の `pip install -r requirements.txt` の依存解決
+#
+# 移植元: fishing-system (W5-2 で集約された依存リスト)
+# 運用: python3.11 + pip install -r requirements.txt
+
+# === 海流データ取得（shared/engines/main.py / downloader.py） ===
+copernicusmarine>=2.0.0
+xarray>=2024.1.0
+netCDF4>=1.6.0
+h5py>=3.10.0
+
+# === 共通（emit_all.py / analyze_engine.py / validate_all.py 等） ===
+pandas>=2.0.0
+numpy>=1.24.0
+requests>=2.31.0
