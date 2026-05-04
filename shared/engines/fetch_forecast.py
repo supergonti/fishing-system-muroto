@@ -36,8 +36,13 @@ TIMEOUT_SEC = 30
 MAX_RETRIES = 3
 
 # プロジェクトルート（このファイルの親の親 = 統合リポ root）
+# 注: 本ファイルは shared/engines/fetch_forecast.py に置かれているため、
+#     リポジトリルートは parents[2]（shared/engines → shared → repo root）。
+#     既存の PROJECT_ROOT 名は parent.parent (= shared/) を指していたため
+#     後方互換のため残し、Muroto 構造のデフォルト出力には REPO_ROOT を使う。
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_OUTPUT = PROJECT_ROOT / "data" / "forecast_data.json"
+REPO_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_OUTPUT = REPO_ROOT / "areas" / "muroto" / "data" / "forecast_data.json"
 LOG_DIR = PROJECT_ROOT / "logs"
 LOG_FILE = LOG_DIR / "forecast.log"
 

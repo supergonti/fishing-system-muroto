@@ -15,10 +15,10 @@ import argparse, csv, json, math, os
 from datetime import datetime, timedelta
 from collections import defaultdict
 
-# ─── 設定（ファイル名のみ変更可） ───────────────────────────
-DB1_CSV  = "data/fishing_muroto_v1.csv"            # DB① メイン釣果（室戸沖釣果DB V2.0 が生成するファイル名）
-DB2_CSV  = "data/muroto_offshore_current_all.csv"  # DB② 5地点海流
-DB3_CSV  = "data/fishing_condition_db.csv"         # DB③ 気象・潮汐
+# ─── 設定（ファイル名のみ変更可 / Muroto 構造化済） ─────────
+DB1_CSV  = "areas/muroto/data/derived/all/fishing_muroto_v1.csv"  # DB① メイン釣果（室戸沖釣果DB V2.0 が生成するファイル名）
+DB2_CSV  = "shared/current/muroto/muroto_offshore_current_all.csv"  # DB② 5地点海流
+DB3_CSV  = "shared/weather/fishing_condition_db.csv"  # DB③ 気象・潮汐
 DB3_STATION = "室戸"                           # DB③ 解析対象地点
 
 # 本番ワークフロー（2026-04-17 確定 → W6-3 / 2026-04-19 で統合リポ向けに更新）:
@@ -29,7 +29,7 @@ DB3_STATION = "室戸"                           # DB③ 解析対象地点
 #   - 後方互換のため DEV_HTML / INDEX_HTML が共に存在しても同 HTML を指す。
 #     旧スタンドアロン構成（development.html / index.html）が併存する環境では
 #     ファイル存在チェックで安全にスキップする。
-OUTPUT_JSON    = "data/analysis/analysis_result.json"   # 本番JSON（fetch 用 / CI 出力）
+OUTPUT_JSON    = "areas/muroto/data/analysis/analysis_result.json"   # 本番JSON（fetch 用 / CI 出力）
 DEV_HTML       = "muroto_fishing_analysis.html"  # v2.1 解析ソフト本体（埋め込みデータ更新対象）
 INDEX_HTML     = "muroto_fishing_analysis.html"  # 同一ファイル（旧 INDEX_HTML 互換シム）
 

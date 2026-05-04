@@ -5,6 +5,7 @@ Muroto Offshore Current Data v2.0 - Configuration
 MDファイル: muroto_offshore_current_points.md 参照
 """
 
+import os
 from datetime import date
 
 # =============================================================================
@@ -68,7 +69,7 @@ DEPTH_LEVEL_INDEX = 0
 # =============================================================================
 # ■ 出力設定
 # =============================================================================
-OUTPUT_DIR    = "data"
+OUTPUT_DIR    = os.environ.get("MUROTO_CURRENT_OUTPUT_DIR", "shared/current/muroto")
 OUTPUT_PREFIX = "muroto_offshore_current"   # CSVファイル名のプレフィックス
 
 # CSV列名設定
