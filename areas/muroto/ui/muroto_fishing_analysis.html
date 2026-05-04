@@ -252,8 +252,8 @@ html.fs-reveal-private .fs-nav-group-private{display:flex}
   <button class="tab-btn" onclick="switchTab('overview')">📊 魚種解析</button>
   <button class="tab-btn" onclick="switchTab('timeline')">🌡 水温TL</button>
   <button class="tab-btn" onclick="switchTab('current-tl')">🌊 流速TL</button>
-  <button class="tab-btn" onclick="switchTab('moon-tl')">🌙 月齢TL</button>
   <button class="tab-btn" onclick="switchTab('tide-tl')">🌊 潮汐TL</button>
+  <button class="tab-btn" onclick="switchTab('moon-tl')">🌙 月齢TL</button>
   <button class="tab-btn" onclick="switchTab('current5')">📍 5地点海流</button>
   <button class="tab-btn" onclick="switchTab('compare')">🔬 魚種比較</button>
   <button class="tab-btn" onclick="switchTab('predict')">🔮 釣れ予測</button>
@@ -359,17 +359,18 @@ html.fs-reveal-private .fs-nav-group-private{display:flex}
   <div id="ov-content" style="display:none;">
     <div class="summary-grid" id="summary-cards"></div>
     <div class="chart-grid">
-      <div class="chart-box"><h3>🌡 水温帯別釣果分布</h3><canvas id="c-wt-bins"></canvas></div>
       <div class="chart-box"><h3>📅 月別釣果数</h3><canvas id="c-month"></canvas></div>
-    </div>
-    <div class="chart-grid">
-      <div class="chart-box"><h3>🌊 流速帯別釣果分布</h3><canvas id="c-cs-bins"></canvas></div>
-      <div class="chart-box"><h3>🌙 潮汐別釣果分布</h3><canvas id="c-tide"></canvas></div>
+      <div class="chart-box"><h3>🌡 水温帯別釣果分布</h3><canvas id="c-wt-bins"></canvas></div>
     </div>
     <div class="chart-grid">
       <div class="chart-box"><h3>📈 水温トレンド（釣れた日の変化方向）</h3><canvas id="c-wt-trend"></canvas></div>
+      <div class="chart-box"><h3>🌙 潮汐別釣果分布</h3><canvas id="c-tide"></canvas></div>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-box"><h3>🌊 流速帯別釣果分布</h3><canvas id="c-cs-bins"></canvas></div>
       <div class="chart-box"><h3>🧭 流れの方向別釣果分布（棒グラフ）</h3><canvas id="c-dir"></canvas></div>
     </div>
+    <div id="summary-bottom-anchor"></div>
     <div class="chart-grid single">
       <div class="chart-box" style="max-height:360px;">
         <h3>🧭 流れの方向別釣果分布（コンパスチャート）<span id="dir-area-label" style="font-size:.72rem;color:var(--text3);margin-left:8px;"></span></h3>
@@ -433,18 +434,17 @@ html.fs-reveal-private .fs-nav-group-private{display:flex}
     <button class="btn-goto-settings" onclick="switchTab('settings')">⚙ 設定変更</button>
   </div>
   <div class="ctrl-row">
-    <label>期間：</label>
-    <input type="date" id="tl-date-from" onchange="renderTimeline()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 8px;font-size:.82rem;">
-    <span style="color:var(--text3);">〜</span>
-    <input type="date" id="tl-date-to" onchange="renderTimeline()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 8px;font-size:.82rem;">
-    <select id="tl-range" onchange="applyRangePreset('tl')" style="font-size:.82rem;">
-      <option value="">プリセット</option>
-      <option value="30">直近1ヶ月</option>
-      <option value="90">直近3ヶ月</option>
-      <option value="180">直近6ヶ月</option>
-      <option value="365">直近1年</option>
-      <option value="730">直近2年</option>
-      <option value="9999">全期間</option>
+    <input type="date" id="tl-date-end" onchange="renderTimeline()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 8px;font-size:.82rem;">
+    <label style="color:var(--text3);">から以前の</label>
+    <label style="color:var(--text2);font-size:.78rem;">期間表示：</label>
+    <select id="tl-range-period" onchange="renderTimeline()" style="font-size:.82rem;">
+      <option value="1m">1か月</option>
+      <option value="3m">3か月</option>
+      <option value="6m">6か月</option>
+      <option value="1y" selected>1年</option>
+      <option value="2y">2年</option>
+      <option value="3y">3年</option>
+      <option value="4y">4年</option>
     </select>
     <label style="display:flex;align-items:center;gap:5px;">
       <input type="checkbox" id="tl-show-current" onchange="renderTimeline()"> 流速も表示
@@ -467,18 +467,17 @@ html.fs-reveal-private .fs-nav-group-private{display:flex}
     <button class="btn-goto-settings" onclick="switchTab('settings')">⚙ 設定変更</button>
   </div>
   <div class="ctrl-row">
-    <label>期間：</label>
-    <input type="date" id="ctl-date-from" onchange="renderCurrentTimeline()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 8px;font-size:.82rem;">
-    <span style="color:var(--text3);">〜</span>
-    <input type="date" id="ctl-date-to" onchange="renderCurrentTimeline()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 8px;font-size:.82rem;">
-    <select id="ctl-range" onchange="applyRangePreset('ctl')" style="font-size:.82rem;">
-      <option value="">プリセット</option>
-      <option value="30">直近1ヶ月</option>
-      <option value="90">直近3ヶ月</option>
-      <option value="180">直近6ヶ月</option>
-      <option value="365">直近1年</option>
-      <option value="730">直近2年</option>
-      <option value="9999">全期間</option>
+    <input type="date" id="ctl-date-end" onchange="renderCurrentTimeline()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 8px;font-size:.82rem;">
+    <label style="color:var(--text3);">から以前の</label>
+    <label style="color:var(--text2);font-size:.78rem;">期間表示：</label>
+    <select id="ctl-range-period" onchange="renderCurrentTimeline()" style="font-size:.82rem;">
+      <option value="1m">1か月</option>
+      <option value="3m">3か月</option>
+      <option value="6m">6か月</option>
+      <option value="1y" selected>1年</option>
+      <option value="2y">2年</option>
+      <option value="3y">3年</option>
+      <option value="4y">4年</option>
     </select>
     <label>矢印間隔：</label>
     <select id="ctl-arrow-step" onchange="renderCurrentTimeline()">
@@ -500,40 +499,6 @@ html.fs-reveal-private .fs-nav-group-private{display:flex}
   </div>
 </div>
 
-<!-- ═══ 月齢タイムラインタブ ══════════════════════════════ -->
-<div class="tab-content" id="tab-moon-tl">
-  <div class="condition-bar">
-    <div class="condition-text" id="condition-display-moon-tl">⚙ 条件未設定 — 設定タブで解析条件を選択してください</div>
-    <button class="btn-goto-settings" onclick="switchTab('settings')">⚙ 設定変更</button>
-  </div>
-  <div class="ctrl-row">
-    <label>期間：</label>
-    <input type="date" id="mtl-date-from" onchange="renderMoonTimeline()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 8px;font-size:.82rem;">
-    <span style="color:var(--text3);">〜</span>
-    <input type="date" id="mtl-date-to" onchange="renderMoonTimeline()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 8px;font-size:.82rem;">
-    <select id="mtl-range" onchange="applyRangePreset('mtl')" style="font-size:.82rem;">
-      <option value="">プリセット</option>
-      <option value="30">直近1ヶ月</option>
-      <option value="90">直近3ヶ月</option>
-      <option value="180">直近6ヶ月</option>
-      <option value="365">直近1年</option>
-      <option value="730">直近2年</option>
-      <option value="9999">全期間</option>
-    </select>
-  </div>
-  <div class="card">
-    <div class="card-title">月齢サイクル ＋ 釣果マーカー</div>
-    <p style="font-size:.76rem;color:var(--text3);margin-bottom:8px;">
-      ⭐ = 各魚種別 重量上位20%の大物　🔴 丸 = 通常釣果　背景帯: 大潮（青）・中潮（緑）・小潮（橙）期
-    </p>
-    <div style="height:320px;position:relative;"><canvas id="c-moon-tl"></canvas></div>
-  </div>
-  <div class="card">
-    <div class="card-title">月齢帯別 釣果分布（大物 vs 通常）</div>
-    <div style="height:220px;position:relative;"><canvas id="c-moon-dist"></canvas></div>
-  </div>
-</div>
-
 <!-- ═══ 潮汐タイムラインタブ ══════════════════════════════ -->
 <div class="tab-content" id="tab-tide-tl">
   <div class="condition-bar">
@@ -541,18 +506,17 @@ html.fs-reveal-private .fs-nav-group-private{display:flex}
     <button class="btn-goto-settings" onclick="switchTab('settings')">⚙ 設定変更</button>
   </div>
   <div class="ctrl-row">
-    <label>期間：</label>
-    <input type="date" id="ttl-date-from" onchange="renderTideTimeline()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 8px;font-size:.82rem;">
-    <span style="color:var(--text3);">〜</span>
-    <input type="date" id="ttl-date-to" onchange="renderTideTimeline()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 8px;font-size:.82rem;">
-    <select id="ttl-range" onchange="applyRangePreset('ttl')" style="font-size:.82rem;">
-      <option value="">プリセット</option>
-      <option value="30">直近1ヶ月</option>
-      <option value="90">直近3ヶ月</option>
-      <option value="180">直近6ヶ月</option>
-      <option value="365">直近1年</option>
-      <option value="730">直近2年</option>
-      <option value="9999">全期間</option>
+    <input type="date" id="ttl-date-end" onchange="renderTideTimeline()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 8px;font-size:.82rem;">
+    <label style="color:var(--text3);">から以前の</label>
+    <label style="color:var(--text2);font-size:.78rem;">期間表示：</label>
+    <select id="ttl-range-period" onchange="renderTideTimeline()" style="font-size:.82rem;">
+      <option value="1m">1か月</option>
+      <option value="3m">3か月</option>
+      <option value="6m">6か月</option>
+      <option value="1y" selected>1年</option>
+      <option value="2y">2年</option>
+      <option value="3y">3年</option>
+      <option value="4y">4年</option>
     </select>
   </div>
   <div class="card">
@@ -566,9 +530,42 @@ html.fs-reveal-private .fs-nav-group-private{display:flex}
   <div class="card">
     <div class="card-title">潮汐種別×月齢帯 釣果分布（新月大潮 〜 満月大潮）</div>
     <p style="font-size:.76rem;color:var(--text3);margin-bottom:8px;">
-      左から新月寄り → 満月寄り。通常釣果(赤) vs 大物(金)
+      左から新月寄り → 満月寄り。釣果(赤) と 大物(金) の積み上げ
     </p>
     <div style="height:260px;position:relative;"><canvas id="c-tide-dist"></canvas></div>
+  </div>
+</div>
+
+<!-- ═══ 月齢タイムラインタブ ══════════════════════════════ -->
+<div class="tab-content" id="tab-moon-tl">
+  <div class="condition-bar">
+    <div class="condition-text" id="condition-display-moon-tl">⚙ 条件未設定 — 設定タブで解析条件を選択してください</div>
+    <button class="btn-goto-settings" onclick="switchTab('settings')">⚙ 設定変更</button>
+  </div>
+  <div class="ctrl-row">
+    <input type="date" id="mtl-date-end" onchange="renderMoonTimeline()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 8px;font-size:.82rem;">
+    <label style="color:var(--text3);">から以前の</label>
+    <label style="color:var(--text2);font-size:.78rem;">期間表示：</label>
+    <select id="mtl-range-period" onchange="renderMoonTimeline()" style="font-size:.82rem;">
+      <option value="1m">1か月</option>
+      <option value="3m">3か月</option>
+      <option value="6m">6か月</option>
+      <option value="1y" selected>1年</option>
+      <option value="2y">2年</option>
+      <option value="3y">3年</option>
+      <option value="4y">4年</option>
+    </select>
+  </div>
+  <div class="card">
+    <div class="card-title">月齢サイクル ＋ 釣果マーカー</div>
+    <p style="font-size:.76rem;color:var(--text3);margin-bottom:8px;">
+      ⭐ = 各魚種別 重量上位20%の大物　🔴 丸 = 通常釣果　背景帯: 大潮（青）・中潮（緑）・小潮（橙）期
+    </p>
+    <div style="height:320px;position:relative;"><canvas id="c-moon-tl"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">月齢帯別 釣果分布（大物 vs 通常）</div>
+    <div style="height:220px;position:relative;"><canvas id="c-moon-dist"></canvas></div>
   </div>
 </div>
 
@@ -726,6 +723,8 @@ function murotoUpdateHeader(label, warn){
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+  // タイムライン4タブの date-end / range-period を初期化（データ未到着でも UI を埋める）
+  if (typeof initTimelineRangeControls === 'function') initTimelineRangeControls();
   const pick = murotoPickAnalysisFile();
   murotoUpdateHeader(pick.label, pick.warn);
 
@@ -778,6 +777,7 @@ function initApp(data) {
 
   initFilterPanel(data);
   refreshSpeciesSelects(data.species_profiles || {});
+  initTimelineRangeControls();
   renderTimeline();
   renderCurrentTimeline();
   renderMoonTimeline();
@@ -1294,43 +1294,66 @@ function buildProfileJS(sp, recs, areaKey='室戸沖') {
 // ══════════════════════════════════════════════════════════
 //  日付範囲フィルター・設定魚種ヘルパー
 // ══════════════════════════════════════════════════════════
-function filterByDateRange(ts, prefix) {
-  const fromEl = document.getElementById(prefix + '-date-from');
-  const toEl   = document.getElementById(prefix + '-date-to');
-  const from = fromEl?.value ? new Date(fromEl.value) : null;
-  const to   = toEl?.value   ? new Date(toEl.value)   : null;
-  if (!from && !to) {
-    // デフォルト: 直近1年
-    const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-365);
-    return ts.filter(r=>new Date(r.date)>=cutoff);
+/**
+ * 期間表示ドロップダウン値 (1m/3m/6m/1y/2y/3y/4y) から月数を返す
+ */
+function periodToMonths(period) {
+  if (!period) return 12;
+  const m = String(period).match(/^(\d+)([my])$/);
+  if (!m) return 12;
+  const n = parseInt(m[1], 10);
+  return m[2] === 'y' ? n * 12 : n;
+}
+
+/**
+ * 日付ピッカー(YYYY-MM-DD) と期間表示ドロップダウンから {start, end} の
+ * Date オブジェクトを返すヘルパー。空欄の場合は今日とデフォルト1年を使う。
+ */
+function getDateRangeFromControls(prefix) {
+  const endEl    = document.getElementById(prefix + '-date-end');
+  const periodEl = document.getElementById(prefix + '-range-period');
+  let endStr = endEl?.value;
+  if (!endStr) {
+    endStr = new Date().toISOString().slice(0,10);
+    if (endEl) endEl.value = endStr;
   }
+  const period = periodEl?.value || '1y';
+  if (periodEl && !periodEl.value) periodEl.value = period;
+  const end = new Date(endStr + 'T23:59:59');
+  const months = periodToMonths(period);
+  const start = new Date(end);
+  start.setMonth(start.getMonth() - months);
+  return { start, end };
+}
+
+function filterByDateRange(ts, prefix) {
+  // 旧 from/to ピッカーは廃止し、date-end + range-period から start/end を算出
+  const { start, end } = getDateRangeFromControls(prefix);
   return ts.filter(r => {
     const d = new Date(r.date);
-    if (from && d < from) return false;
-    if (to && d > to) return false;
+    if (d < start) return false;
+    if (d > end) return false;
     return true;
   });
 }
 
+/**
+ * 4タブ共通の date-end / range-period の初期値設定
+ * 日付: 今日 / 期間: 1年（HTML 既定値そのまま）
+ */
+function initTimelineRangeControls() {
+  const today = new Date().toISOString().slice(0,10);
+  ['tl','ctl','mtl','ttl'].forEach(prefix => {
+    const endEl = document.getElementById(prefix + '-date-end');
+    if (endEl && !endEl.value) endEl.value = today;
+    const perEl = document.getElementById(prefix + '-range-period');
+    if (perEl && !perEl.value) perEl.value = '1y';
+  });
+}
+
+// 旧プリセットボタン用（残存呼び出しのフォールバック）
 function applyRangePreset(prefix) {
-  const sel = document.getElementById(prefix + '-range');
-  const days = parseInt(sel?.value, 10);
-  if (!days) return;
-  const fromEl = document.getElementById(prefix + '-date-from');
-  const toEl   = document.getElementById(prefix + '-date-to');
-  if (days >= 9999) {
-    // 全期間: データの最初と最後の日付を設定
-    const ts = G?.temp_timeseries||[];
-    if (ts.length && fromEl) fromEl.value = ts[0].date;
-    if (ts.length && toEl) toEl.value = ts[ts.length-1].date;
-  } else {
-    const to = new Date();
-    const from = new Date(); from.setDate(from.getDate() - days);
-    if (fromEl) fromEl.value = from.toISOString().split('T')[0];
-    if (toEl) toEl.value = to.toISOString().split('T')[0];
-  }
-  sel.value = '';
-  // re-render
+  // 新方式では未使用。安全のため再描画のみ実行。
   if (prefix === 'tl') renderTimeline();
   else if (prefix === 'ctl') renderCurrentTimeline();
   else if (prefix === 'mtl') renderMoonTimeline();
@@ -1518,15 +1541,17 @@ function renderTideTimeline() {
   CH['c-tide-dist'] = new Chart(ctx2, {type:'bar', data:{
     labels:bLabels,
     datasets:[
-      {label:'通常釣果', data:eightBands.map(b=>normalCatch.filter(r=>inBand8(r['月齢'],b)).length),
+      {label:'釣果', stack:'tideStack',
+        data:eightBands.map(b=>normalCatch.filter(r=>inBand8(r['月齢'],b)).length),
         backgroundColor:'#e63946', borderWidth:1, borderColor:'#e63946'},
-      {label:'⭐大物', data:eightBands.map(b=>bigCatch.filter(r=>inBand8(r['月齢'],b)).length),
+      {label:'大物', stack:'tideStack',
+        data:eightBands.map(b=>bigCatch.filter(r=>inBand8(r['月齢'],b)).length),
         backgroundColor:'#e9c46a', borderWidth:1, borderColor:'#e9c46a'},
     ]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{labels:{color:'#94a8bc',font:{size:10}}}},
-      scales:{x:{ticks:{color:'#94a8bc',font:{size:9}},grid:{color:'#1e3550'}},
-              y:{ticks:{color:'#94a8bc',font:{size:9}},grid:{color:'#1e3550'},title:{display:true,text:'釣果日数',color:'#94a8bc'},beginAtZero:true}}}});
+      scales:{x:{stacked:true,ticks:{color:'#94a8bc',font:{size:9}},grid:{color:'#1e3550'}},
+              y:{stacked:true,ticks:{color:'#94a8bc',font:{size:9}},grid:{color:'#1e3550'},title:{display:true,text:'釣果日数',color:'#94a8bc'},beginAtZero:true}}}});
 }
 
 function switchTab(name) {
@@ -1668,10 +1693,13 @@ function isoPointRadius(ctx) {
 
 function barChart(id,labels,datasets,opts={}) {
   kc(id); const ctx=document.getElementById(id); if(!ctx) return;
-  CH[id]=new Chart(ctx,{type:'bar',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:true,
+  const stacked = !!opts.stacked;
+  // 積み上げ指定時は datasets に stack キーを付与
+  const ds = stacked ? datasets.map(d=>({stack:'stack0', ...d})) : datasets;
+  CH[id]=new Chart(ctx,{type:'bar',data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:true,
     plugins:{legend:{labels:{color:'#94a8bc',font:{size:10}},display:datasets.length>1}},
-    scales:{x:{ticks:{color:'#94a8bc',font:{size:9}},grid:{color:'#1e3550'}},
-            y:{ticks:{color:'#94a8bc',font:{size:9}},grid:{color:'#1e3550'},beginAtZero:true,...(opts.y||{})}},
+    scales:{x:{stacked:stacked,ticks:{color:'#94a8bc',font:{size:9}},grid:{color:'#1e3550'}},
+            y:{stacked:stacked,ticks:{color:'#94a8bc',font:{size:9}},grid:{color:'#1e3550'},beginAtZero:true,...(opts.y||{})}},
     ...(opts.extra||{})}});
 }
 function doughnutChart(id,labels,values,colors) {
@@ -1813,19 +1841,22 @@ function loadSpeciesProfile() {
   const trC={急上昇:'rgba(230,57,70,.8)',上昇:'rgba(46,196,182,.8)',安定:'rgba(100,160,200,.7)',下降:'rgba(130,100,200,.7)',急下降:'rgba(123,45,139,.8)'};
   const C8=['N','NE','E','SE','S','SW','W','NW'];
   const alpha = c => c+'bb'; // 複数時は少し透明
+  // 複数魚種時は積み上げ表示
+  const isMulti = items.length >= 2;
+  const stackOpt = isMulti ? {stacked:true} : {};
 
   // ── 水温帯チャート
   const allWtBins=[...new Set(items.flatMap(x=>Object.keys(x.p.water_temp_bins||{})))].sort();
   barChart('c-wt-bins',allWtBins, items.map(x=>({
     label:x.sp, data:allWtBins.map(k=>(x.p.water_temp_bins||{})[k]||0),
     backgroundColor:alpha(x.color), borderColor:x.color, borderWidth:1,
-  })));
+  })), {...stackOpt});
 
   // ── 月別チャート
   barChart('c-month',ms.map(m=>m+'月'), items.map(x=>({
     label:x.sp, data:ms.map(m=>(x.p.month_dist||{})[m]||0),
     backgroundColor:alpha(x.color), borderColor:x.color, borderWidth:1,
-  })));
+  })), {...stackOpt});
 
   // ── 流速帯チャート（選択海域を反映したラベル）
   const ac = AREA_COLS[primaryArea] || AREA_COLS['室戸沖'];
@@ -1833,14 +1864,14 @@ function loadSpeciesProfile() {
   barChart('c-cs-bins',csO, items.map((x,i)=>({
     label:x.sp, data:csO.map(k=>(x.p.current_speed_bins||{})[k]||0),
     backgroundColor:alpha(x.color), borderColor:x.color, borderWidth:1,
-  })));
+  })), {...stackOpt});
 
   // ── 潮汐チャート
   const tO=tO_all.filter(k=>items.some(x=>(x.p.tide_dist||{})[k]));
   barChart('c-tide',tO, items.map(x=>({
     label:x.sp, data:tO.map(k=>(x.p.tide_dist||{})[k]||0),
     backgroundColor:alpha(x.color), borderColor:x.color, borderWidth:1,
-  })), {y:{title:{display:true,text:'%',color:'#94a8bc'}}});
+  })), {y:{title:{display:true,text:'%',color:'#94a8bc'}}, ...stackOpt});
 
   // ── 水温トレンドチャート
   const trO=trO_all.filter(k=>items.some(x=>(x.p.water_temp_trend_dist||{})[k]));
@@ -1851,14 +1882,40 @@ function loadSpeciesProfile() {
     barChart('c-wt-trend',trO, items.map(x=>({
       label:x.sp, data:trO.map(k=>(x.p.water_temp_trend_dist||{})[k]||0),
       backgroundColor:alpha(x.color), borderColor:x.color, borderWidth:1,
-    })), {y:{title:{display:true,text:'%',color:'#94a8bc'}}});
+    })), {y:{title:{display:true,text:'%',color:'#94a8bc'}}, ...stackOpt});
   }
 
   // ── 方向別チャート（棒グラフ）
   barChart('c-dir',C8, items.map(x=>({
     label:x.sp, data:C8.map(k=>(x.p.current_dir_dist||{})[k]||0),
     backgroundColor:alpha(x.color), borderColor:x.color, borderWidth:1,
-  })), {y:{title:{display:true,text:'%',color:'#94a8bc'}}});
+  })), {y:{title:{display:true,text:'%',color:'#94a8bc'}}, ...stackOpt});
+
+  // ── 複数魚種時：summary-cards / filter-note をタブ最下部へ移動 ──
+  // 単一魚種時：元の位置（ov-content の先頭）に戻す
+  try {
+    const ovContent = document.getElementById('ov-content');
+    const summary   = document.getElementById('summary-cards');
+    const filterNote= document.getElementById('filter-note');
+    const anchor    = document.getElementById('summary-bottom-anchor');
+    if (ovContent && summary && anchor) {
+      if (isMulti) {
+        // 最下部 (anchor の前) に移動
+        if (summary.nextSibling !== anchor) ovContent.insertBefore(summary, anchor);
+        if (filterNote && filterNote.parentNode) {
+          // filter-note は ov-content 外（兄弟）にあるが、複数時は summary の直前へ
+          ovContent.insertBefore(filterNote, summary);
+        }
+      } else {
+        // 単一時：summary を ov-content の先頭へ戻す
+        if (ovContent.firstChild !== summary) ovContent.insertBefore(summary, ovContent.firstChild);
+        // filter-note は元の位置（ov-content の外、ov-content の直前）に戻す
+        if (filterNote && filterNote.parentNode === ovContent) {
+          ovContent.parentNode.insertBefore(filterNote, ovContent);
+        }
+      }
+    }
+  } catch(e) { console.warn('summary relocation failed', e); }
 
   // ── 方向別チャート（レーダー）
   const areaLabel = areas.join('・');
