@@ -1,9 +1,9 @@
 {
   "version": "2.1",
-  "generated_at": "2026-05-04 22:21",
+  "generated_at": "2026-05-04 14:27",
   "db_info": {
     "db1_records": 860,
-    "db2_records": 7825,
+    "db2_records": 7830,
     "db3_records": 12568,
     "db3_date_range": {
       "first": "2022-01-01",
@@ -2400,7 +2400,7 @@
         },
         "気温_最高": {
           "n": 4,
-          "mean": 15.27,
+          "mean": 15.28,
           "median": 15.0,
           "std": 3.31,
           "min": 11.1,
@@ -2440,7 +2440,7 @@
         },
         "水温(Open-Meteo)": {
           "n": 4,
-          "mean": 18.82,
+          "mean": 18.83,
           "median": 18.8,
           "std": 0.35,
           "min": 18.4,
@@ -2450,7 +2450,7 @@
         },
         "最大波高": {
           "n": 4,
-          "mean": 1.43,
+          "mean": 1.42,
           "median": 1.5,
           "std": 0.27,
           "min": 1.0,
@@ -2460,7 +2460,7 @@
         },
         "波周期": {
           "n": 4,
-          "mean": 7.18,
+          "mean": 7.17,
           "median": 7.3,
           "std": 0.99,
           "min": 5.8,
@@ -5939,7 +5939,7 @@
         },
         "気温_最高": {
           "n": 20,
-          "mean": 15.47,
+          "mean": 15.48,
           "median": 16.15,
           "std": 9.29,
           "min": 1.5,
@@ -5949,7 +5949,7 @@
         },
         "気温_最低": {
           "n": 20,
-          "mean": 13.34,
+          "mean": 13.35,
           "median": 12.85,
           "std": 9.04,
           "min": -0.6,
@@ -5979,7 +5979,7 @@
         },
         "水温(Open-Meteo)": {
           "n": 20,
-          "mean": 21.82,
+          "mean": 21.83,
           "median": 20.85,
           "std": 4.51,
           "min": 16.6,
@@ -5989,7 +5989,7 @@
         },
         "最大波高": {
           "n": 20,
-          "mean": 0.91,
+          "mean": 0.9,
           "median": 0.9,
           "std": 0.3,
           "min": 0.4,
@@ -7334,7 +7334,7 @@
         },
         "気温_平均": {
           "n": 20,
-          "mean": 10.08,
+          "mean": 10.09,
           "median": 8.7,
           "std": 6.06,
           "min": 0.7,
@@ -7414,7 +7414,7 @@
         },
         "月齢": {
           "n": 20,
-          "mean": 10.54,
+          "mean": 10.55,
           "median": 8.4,
           "std": 8.17,
           "min": 0.3,
@@ -10140,7 +10140,7 @@
         },
         "気温_最高": {
           "n": 12,
-          "mean": 21.93,
+          "mean": 21.92,
           "median": 22.45,
           "std": 4.55,
           "min": 13.4,
@@ -12802,7 +12802,7 @@
           },
           "塩分stats": {
             "n": 21,
-            "mean": 33.66,
+            "mean": 33.67,
             "median": 33.8,
             "std": 0.93,
             "min": 31.28,
@@ -17444,7 +17444,7 @@
         },
         "室戸沖_流向": {
           "n": 12,
-          "mean": 131.33,
+          "mean": 131.32,
           "median": 94.25,
           "std": 98.71,
           "min": 28.5,
@@ -18217,7 +18217,7 @@
           },
           "水温stats": {
             "n": 4,
-            "mean": 20.5,
+            "mean": 20.51,
             "median": 19.67,
             "std": 3.4,
             "min": 17.03,
@@ -19275,7 +19275,7 @@
         },
         "気温_平均": {
           "n": 4,
-          "mean": 5.08,
+          "mean": 5.07,
           "median": 5.05,
           "std": 2.84,
           "min": 1.1,
@@ -19577,7 +19577,7 @@
           },
           "水温stats": {
             "n": 4,
-            "mean": 19.44,
+            "mean": 19.43,
             "median": 19.47,
             "std": 1.81,
             "min": 17.3,
@@ -71614,7 +71614,7 @@
       "month": 11,
       "point": "北東",
       "avg_speed_kn": 0.49,
-      "avg_temp_c": 24.57,
+      "avg_temp_c": 24.56,
       "avg_salinity": 34.08,
       "avg_direction": 96.19,
       "days": 30
@@ -71804,7 +71804,7 @@
       "month": 2,
       "point": "西",
       "avg_speed_kn": 0.6,
-      "avg_temp_c": 17.85,
+      "avg_temp_c": 17.84,
       "avg_salinity": 34.57,
       "avg_direction": 125.59,
       "days": 28
@@ -71908,6 +71908,56 @@
       "avg_salinity": 34.53,
       "avg_direction": 75.76,
       "days": 14
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "point": "北東",
+      "avg_speed_kn": 0.96,
+      "avg_temp_c": 21.27,
+      "avg_salinity": 34.29,
+      "avg_direction": 85.7,
+      "days": 1
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "point": "北西",
+      "avg_speed_kn": 1.51,
+      "avg_temp_c": 21.83,
+      "avg_salinity": 34.34,
+      "avg_direction": 115.1,
+      "days": 1
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "point": "室戸沖",
+      "avg_speed_kn": 2.27,
+      "avg_temp_c": 21.99,
+      "avg_salinity": 34.51,
+      "avg_direction": 77.8,
+      "days": 1
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "point": "東",
+      "avg_speed_kn": 2.46,
+      "avg_temp_c": 22.04,
+      "avg_salinity": 34.52,
+      "avg_direction": 76.5,
+      "days": 1
+    },
+    {
+      "year": 2026,
+      "month": 5,
+      "point": "西",
+      "avg_speed_kn": 2.0,
+      "avg_temp_c": 21.94,
+      "avg_salinity": 34.51,
+      "avg_direction": 77.7,
+      "days": 1
     }
   ],
   "records": [
