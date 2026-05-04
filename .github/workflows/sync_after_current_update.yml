@@ -1,0 +1,191 @@
+name: Sync condition+analysis after current data update
+
+# update_data.yml が前日分の海流データを取得・コミットした **直後** に起動し、
+# 気象差分取得 (sync_condition_db) → 派生 CSV3本 (emit_all) → 解析4本 (analyze_engine)
+# を Muroto 構造（shared/weather + shared/current/muroto + areas/muroto/data/...）で
+# 連鎖実行して analysis_*.json を最新化する。
+#
+# トリガー連鎖:
+#   update_data.yml (毎日 06:30 JST 自動 or 手動)
+#     → shared/current/muroto/muroto_offshore_current_all.csv を [skip ci] で commit
+#     → 本ワークフローが workflow_run(completed) で起動
+#     → sync_condition_db → emit_all → analyze_engine ×4 → commit & push
+#     → V6.0 / v2.1 ともに前日海流入りで反映完了
+#
+# 旧 fishing-system/.github/workflows/sync_after_current_update.yml (W6-3/W6-4) を
+# Muroto 構造に適合化したもの。
+#
+# トリガー二段構え:
+#   - workflow_run: update_data.yml の [skip ci] commit が GITHUB_TOKEN 由来で
+#     他 workflow を発火させない GitHub Actions の仕様を回避する主経路。
+#   - push: 人が直接 CSV/JS を push した場合のバックアップ経路。
+#
+# concurrency:
+#   - sync-after-master-push（master_catch push 由来）と sync-after-current-update
+#     （海流更新由来）は別グループ。両方が同時に動いても冪等。
+
+on:
+  # update_data.yml の workflow_run 完了をフックにする主経路。
+  workflow_run:
+    workflows: ["Update offshore current data (CMEMS, daily 06:30 JST)"]
+    types: [completed]
+    branches: [main]
+  # 人が直接 CSV/JS を push したケース用バックアップ経路。
+  # GITHUB_TOKEN 以外の push は通常通りトリガーされる。
+  push:
+    paths:
+      - 'shared/current/muroto/muroto_offshore_current_all.csv'
+      - 'areas/muroto/data/js/muroto_offshore_current_dashboard_data.js'
+    branches:
+      - main
+  workflow_dispatch:  # 手動再生成も可
+
+concurrency:
+  group: sync-after-current-update
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    # workflow_run イベントは upstream 失敗時もトリガーされるため、成功時のみ継続。
+    # 他のトリガー（push/workflow_dispatch）は常に実行する。
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python 3.11 セットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      # Muroto には現状 requirements.txt が無いため inline で必要パッケージを入れる。
+      # sync_condition_db (Open-Meteo HTTP) / emit_all / analyze_engine が依存する最小セット。
+      - name: 依存パッケージをインストール
+        run: |
+          python -m pip install --upgrade pip
+          pip install \
+            "pandas>=2.0.0" \
+            "numpy>=1.24.0" \
+            "requests>=2.31.0"
+
+      # --- Step A: 気象データ差分取得 (sync_condition_db) ---
+      # 前日朝の sync_after_master_push 時点では `<= yesterday` フィルタで除外され
+      # 気象欄が空欄のまま残った当日新規 master_catch レコードを、本連鎖タイミングで
+      # 改めて取得して空欄を埋める（sync_condition_db は keep-last 重複排除で冪等）。
+      - name: 気象データ差分取得 (sync_condition_db)
+        run: |
+          python3 -m shared.engines.sync_condition_db \
+            --master    areas/muroto/data/master_catch.csv \
+            --condition shared/weather/fishing_condition_db.csv
+
+      # --- Step B: emit_all で派生CSV群を再生成 ---
+      # 海流データ（C④）と気象データ（C③）が更新されたので、これを参照する
+      # fishing_data / fishing_muroto_v1 / fishing_integrated を再ビルドする。
+      - name: emit_all で派生CSV群を再生成
+        run: |
+          python3 -m shared.engines.emit_all \
+            --master  areas/muroto/data/master_catch.csv \
+            --c3      shared/weather/fishing_condition_db.csv \
+            --c4      shared/current/muroto/muroto_offshore_current_all.csv \
+            --out-dir areas/muroto/data/derived/all
+
+      # --- 不明行検出ガード（旧 W7-1 由来） ---
+      # 派生 CSV (fishing_muroto_v1.csv) に nearest_station="不明" が残っていれば
+      # CI を停止して Pages への反映をブロックする。collector で人レビューが必要。
+      - name: 不明行検出（push ブロック）
+        run: |
+          python3 -c "
+          import csv, sys, os
+          path = 'areas/muroto/data/derived/all/fishing_muroto_v1.csv'
+          if not os.path.exists(path):
+              print(f'ERROR: {path} が存在しません（emit_all が失敗している可能性）')
+              sys.exit(1)
+          if os.path.getsize(path) == 0:
+              print(f'ERROR: {path} が空です')
+              sys.exit(1)
+          with open(path, encoding='utf-8-sig') as f:
+              rows = list(csv.DictReader(f))
+          unknown_rows = [r for r in rows if r.get('nearest_station') == '不明']
+          if unknown_rows:
+              print(f'ERROR: {len(unknown_rows)} 行の nearest_station が不明です。collector でレビューしてください。')
+              for r in unknown_rows[:10]:
+                  print(f\"  record_id={r.get('record_id')} spot={r.get('spot')!r} date={r.get('date')}\")
+              sys.exit(1)
+          print(f'OK: 不明行なし ({len(rows)} 行)')
+          "
+
+      # --- Step D: analyze_engine で解析結果を再生成（all + muroto1/2/3 の 4本） ---
+      # 各船別 derived CSV は分割していないため、共通の fishing_muroto_v1.csv を
+      # --boats フラグで boat_id 絞り込みすることで個別 JSON を出力する。
+      # HTML 埋込更新は本ワークフローでは扱わない（--no-html）。
+      - name: 解析結果を再生成 (analyze_engine, all + muroto1/2/3)
+        run: |
+          set -e
+          db1="areas/muroto/data/derived/all/fishing_muroto_v1.csv"
+          db2="shared/current/muroto/muroto_offshore_current_all.csv"
+          db3="shared/weather/fishing_condition_db.csv"
+          analysis_dir="areas/muroto/data/analysis"
+          mkdir -p "$analysis_dir"
+
+          # 全船統合
+          echo "=== analyze_engine muroto all ==="
+          python3 -m shared.engines.analyze_engine \
+            --db1 "$db1" \
+            --db2 "$db2" \
+            --db3 "$db3" \
+            --out "$analysis_dir/analysis_result.json" \
+            --no-html
+
+          # muroto1
+          echo "=== analyze_engine muroto1 ==="
+          python3 -m shared.engines.analyze_engine \
+            --db1 "$db1" \
+            --db2 "$db2" \
+            --db3 "$db3" \
+            --out "$analysis_dir/analysis_muroto1.json" \
+            --boats muroto1 \
+            --no-html
+
+          # muroto2
+          echo "=== analyze_engine muroto2 ==="
+          python3 -m shared.engines.analyze_engine \
+            --db1 "$db1" \
+            --db2 "$db2" \
+            --db3 "$db3" \
+            --out "$analysis_dir/analysis_muroto2.json" \
+            --boats muroto2 \
+            --no-html
+
+          # muroto3
+          echo "=== analyze_engine muroto3 ==="
+          python3 -m shared.engines.analyze_engine \
+            --db1 "$db1" \
+            --db2 "$db2" \
+            --db3 "$db3" \
+            --out "$analysis_dir/analysis_muroto3.json" \
+            --boats muroto3 \
+            --no-html
+
+      # --- 変更があれば commit & push（[skip ci] 付き） ---
+      - name: 変更を commit & push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add shared/weather/fishing_condition_db.csv || true
+          git add areas/muroto/data/derived/ || true
+          git add areas/muroto/data/analysis/ || true
+
+          if git diff --staged --quiet; then
+            echo "変更なし。コミットをスキップします。"
+          else
+            git commit -m "sync after current update (Muroto): $(date -u +%Y-%m-%dT%H:%M:%SZ) [skip ci]"
+            git push
+            echo "コミット＆プッシュ完了"
+          fi
