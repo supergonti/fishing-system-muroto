@@ -41,9 +41,9 @@ except ImportError as e:
     print("   pip install -r requirements.txt を実行してください")
     sys.exit(1)
 
-from config import START_DATE, END_DATE, OUTPUT_DIR, OUTPUT_PREFIX
-from downloader import print_source_status, get_dataset
-from processor import extract_daily_data, save_to_csv, load_csv, generate_monthly_summary, print_summary
+from .config import START_DATE, END_DATE, OUTPUT_DIR, OUTPUT_PREFIX
+from .downloader import print_source_status, get_dataset
+from .processor import extract_daily_data, save_to_csv, load_csv, generate_monthly_summary, print_summary
 
 # =============================================================================
 # ログ設定

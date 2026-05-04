@@ -18,7 +18,7 @@ from typing import Optional
 
 import requests
 
-from config import (
+from .config import (
     JCOPE_FTP_HOST, JCOPE_FTP_USER, JCOPE_FTP_PASS, JCOPE_FTP_PATH,
     JCOPE2M_OPENDAP_BASE,
     CMEMS_USE, CMEMS_USERNAME, CMEMS_PASSWORD, CMEMS_DATASET,

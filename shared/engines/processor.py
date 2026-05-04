@@ -21,7 +21,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
-from config import (
+from .config import (
     MEASUREMENT_POINTS,
     VAR_U, VAR_V, VAR_TEMP, VAR_SALT,
     VAR_LON, VAR_LAT, VAR_TIME, VAR_DEP,
