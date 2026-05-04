@@ -236,11 +236,11 @@ html.fs-reveal-private .fs-nav-group-private{display:flex}
 
     <!-- ① ダッシュボード -->
     <section class="section" aria-labelledby="dashboardTitle">
-      <div class="section-header" onclick="toggleSection('dashboard')" role="button" tabindex="0" aria-expanded="true" aria-controls="dashboardBody">
+      <div class="section-header" onclick="toggleSection('dashboard')" role="button" tabindex="0" aria-expanded="false" aria-controls="dashboardBody">
         <h2 class="section-title" id="dashboardTitle">📋 ダッシュボード</h2>
-        <span class="toggle-btn"><span class="toggle-arrow" id="dashboardArrow">▼</span> <span id="dashboardToggleLabel">折りたたむ</span></span>
+        <span class="toggle-btn"><span class="toggle-arrow" id="dashboardArrow">▶</span> <span id="dashboardToggleLabel">展開</span></span>
       </div>
-      <div class="section-body" id="dashboardBody">
+      <div class="section-body collapsed" id="dashboardBody">
         <div class="card-grid">
           <div class="card panel"><div class="label">総データ行数</div><div class="value" id="totalRows">—</div><div class="sub" id="totalRowsSub"></div></div>
           <div class="card panel"><div class="label">データ開始日</div><div class="value" style="font-size:1rem" id="dateFrom">—</div></div>
@@ -372,7 +372,7 @@ let chartSpeedInst    = null;
 let chartSalinityInst = null;
 let _cachedDates = null;        // uniqDates キャッシュ
 const POINTS = ['北西','西','室戸沖','東','北東'];
-const sectionOpen = { dashboard: true, viewer: true, missing: true };
+const sectionOpen = { dashboard: false, viewer: true, missing: true };
 const AXIS_SPEED_MIN = 0, AXIS_SPEED_MAX = 3.5;
 const IS_MOBILE = window.innerWidth <= 640;
 
