@@ -82,6 +82,34 @@ details.panel summary:hover{background:#f5f8fb;}
 .dd-clear{padding:5px 12px;font-size:.75rem;color:var(--accent);cursor:pointer;border-top:1px solid var(--border);display:block;text-align:center;}
 .dd-clear:hover{background:#f0f7ff;}
 
+/* ─── グループ式チェックリスト（魚種・釣り場 DDL 用） ─── */
+.cb-list-grouped{display:flex;flex-direction:column;gap:0;max-height:240px;overflow-y:auto;padding:4px 6px;}
+.cb-list-grouped::-webkit-scrollbar{width:5px;}
+.cb-list-grouped::-webkit-scrollbar-thumb{background:#a8c0d6;border-radius:2px;}
+.cb-group{padding:5px 0;border-bottom:1px solid var(--border);}
+.cb-group:last-child{border-bottom:none;}
+.cb-group:first-child{padding-top:0;}
+.cb-group-header{display:flex;align-items:center;gap:8px;margin-bottom:0;padding:4px 6px;border-radius:6px;cursor:pointer;user-select:none;transition:background .15s;}
+.cb-group-header:hover{background:#eaf3fb;}
+.cb-group-header:hover .cb-group-label{color:var(--primary);}
+.cb-group-arrow{font-size:.7rem;color:var(--text2);transition:transform .2s;margin-right:2px;}
+.cb-group-label{font-size:.82rem;font-weight:700;color:var(--text);letter-spacing:.3px;transition:color .2s;}
+.cb-group.has-checked .cb-group-label{color:var(--accent);}
+.cb-group.has-checked .cb-group-arrow{color:var(--accent);}
+.cb-group.has-checked .cb-group-header{background:#e3f1fb;}
+.cb-group-count{font-size:.7rem;color:var(--text3);margin-left:auto;flex-shrink:0;}
+.cb-group.has-checked .cb-group-count{color:var(--accent);}
+.cb-group-toggle{position:relative;width:34px;height:18px;border-radius:9px;border:none;background:#c8d6e5;cursor:pointer;transition:background .2s;flex-shrink:0;padding:0;}
+.cb-group-toggle::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:all .2s;}
+.cb-group-toggle.on{background:var(--accent);}
+.cb-group-toggle.on::after{left:18px;background:#fff;}
+.cb-group-chips{display:flex;flex-wrap:wrap;gap:3px;padding:4px 4px 2px 14px;}
+.cb-group-chips.collapsed{display:none;}
+.cb-chip{display:flex;align-items:center;gap:3px;padding:3px 8px;border-radius:12px;border:1px solid var(--border2);background:var(--surface);cursor:pointer;font-size:.75rem;color:var(--text2);transition:all .15s;white-space:nowrap;user-select:none;}
+.cb-chip input[type=checkbox]{accent-color:var(--accent);cursor:pointer;width:11px;height:11px;flex-shrink:0;}
+.cb-chip:has(input:checked){border-color:var(--accent);background:#e3f1fb;color:var(--primary);}
+.multi-dd-list:has(.cb-list-grouped){min-width:280px;max-width:360px;max-height:340px;}
+
 /* ─── ボタン ─── */
 .btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border:0;border-radius:7px;font:500 .85rem inherit;color:#fff;cursor:pointer;transition:opacity .15s;}
 .btn:hover{opacity:.85;}
@@ -296,6 +324,37 @@ const MOON_MAP = {
 };
 
 // ═══════════════════════════════════════════════════
+// 魚種・釣り場 グループ定義（muroto_fishing_analysis.html より移植）
+// ═══════════════════════════════════════════════════
+const SPECIES_GROUPS = [
+  { label:'カンパチ系',     items:['カンパチ','ヒレナガカンパチ'] },
+  { label:'クエ系',         items:['クエ'] },
+  { label:'マハタ系',       items:['マハタ'] },
+  { label:'イシナギ系',     items:['イシナギ'] },
+  { label:'カンパチ小型系', items:['ネイリ（カンパチ幼魚）','ネイリ（カンパチ若魚）'] },
+  { label:'ヒラマサ系',     items:['ヒラマサ'] },
+  { label:'ブリ系',         items:['ブリ','ブリ（デカブリ）','ハマチ','メジロ','メジロ（ブリ系）','メジロ（ブリ）'] },
+  { label:'マグロ系',       items:['キハダマグロ','マグロ（キハダ）','イソマグロ'] },
+  { label:'カツオ系',       items:['カツオ','ハガツオ','スマ'] },
+  { label:'サワラ系',       items:['カマスサワラ','サワラ'] },
+  { label:'その他根魚系',   items:['アカハタ','アオハタ','オオモンハタ','カケハシハタ','ホウキハタ','アヤメカサゴ','ウッカリカサゴ','エビスダイ','チカメキントキ'] },
+  { label:'鯛系',           items:['マダイ','オオクチハマダイ','レンコダイ','シロアマダイ','アマダイ','イトヨリ','ヒョウダイ'] },
+  { label:'磯釣り対象魚',   items:['グレ（メジナ）','イシガキダイ','アイゴ','ヒラスズキ','イサキ'] },
+  { label:'底物・深場系',   items:['ヒラメ','カワハギ','ホウボウ','アカヤガラ','オオニベ','ハチビキ','メダイ'] },
+  { label:'イカ',           items:['スルメイカ'] },
+  { label:'その他',         items:['カマス','サバ','アジ','コバンザメ','クロタチカマス','オナガザメ'] },
+];
+
+const SPOT_GROUPS = [
+  { label:'室戸沖',         items:['室戸沖','室戸沖周辺','室戸沖（岬沖）','室戸沖（磯）','室戸岬沖','高知室戸沖','高知室戸沖周辺'] },
+  { label:'室戸沖近場',     items:['室戸沖近場','室戸沖（近場）','室戸沖（風裏）','高知室戸沖近場','室戸近場'] },
+  { label:'室戸港・磯',     items:['室戸港','室戸港内','室戸地磯','室戸（磯）','地磯','室戸沖磯','室戸沖（港）','高知室戸沖周辺（散歩がてら）'] },
+  { label:'高知西部',       items:['安満地','安満地（風裏）','柏島','甲浦','甲浦（風裏）','高知 安満地','高知 柏島'] },
+  { label:'愛媛',           items:['宇和島','愛媛'] },
+  { label:'遠征（小笠原）', items:['小笠原','小笠原沖','小笠原諸島'] },
+];
+
+// ═══════════════════════════════════════════════════
 // 状態
 // ═══════════════════════════════════════════════════
 let allRecords = [];
@@ -404,22 +463,166 @@ function initUI(){
 }
 
 // ═══════════════════════════════════════════════════
-// チェックボックス型ドロップダウン
+// チェックボックス型ドロップダウン（グループ式）
 // ═══════════════════════════════════════════════════
-function buildDDItems(type, values){
-  document.getElementById(`dd-${type}-items`).innerHTML =
-    values.map(v =>
-      `<label class="dd-item">
-        <input type="checkbox" value="${escHtml(v)}" onchange="applyFilters()">
-        <span>${escHtml(v)}</span>
-      </label>`
-    ).join('');
+function updateGroupToggleState(grpDiv){
+  const cbs = grpDiv.querySelectorAll('input[type=checkbox]');
+  const anyOn = [...cbs].some(c => c.checked);
+  const toggle = grpDiv.querySelector('.cb-group-toggle');
+  if(toggle) toggle.classList.toggle('on', anyOn);
 }
 
+function updateGroupHighlight(grpDiv){
+  const cbs = grpDiv.querySelectorAll('input[type=checkbox]');
+  const checkedCount = [...cbs].filter(c => c.checked).length;
+  grpDiv.classList.toggle('has-checked', checkedCount > 0);
+  const countEl = grpDiv.querySelector('.cb-group-count');
+  if(countEl) countEl.textContent = checkedCount > 0 ? checkedCount + '/' + cbs.length : '';
+}
+
+/**
+ * グループ式チェックリストを構築
+ * 既存フィルタロジックとの互換: input[type=checkbox] の value にデータ値、change で applyFilters() を呼ぶ。
+ */
+function buildGroupedCBList(containerId, allItems, groupDefs){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  el.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'cb-list-grouped';
+  el.appendChild(wrap);
+  const assigned = new Set();
+
+  function makeGroup(label, present){
+    const grpDiv = document.createElement('div');
+    grpDiv.className = 'cb-group';
+    const hdr = document.createElement('div');
+    hdr.className = 'cb-group-header';
+    const arrow = document.createElement('span');
+    arrow.className = 'cb-group-arrow';
+    arrow.textContent = '▶';
+    const lbl = document.createElement('span');
+    lbl.className = 'cb-group-label';
+    lbl.textContent = label;
+    const countSpan = document.createElement('span');
+    countSpan.className = 'cb-group-count';
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'cb-group-toggle';
+    toggle.onclick = (e) => {
+      e.preventDefault(); e.stopPropagation();
+      const cbs = grpDiv.querySelectorAll('input[type=checkbox]');
+      const anyOn = [...cbs].some(cb => cb.checked);
+      cbs.forEach(cb => cb.checked = !anyOn);
+      updateGroupToggleState(grpDiv);
+      updateGroupHighlight(grpDiv);
+      applyFilters();
+    };
+    hdr.appendChild(arrow); hdr.appendChild(lbl); hdr.appendChild(countSpan); hdr.appendChild(toggle);
+    hdr.addEventListener('click', (e) => {
+      if(e.target.closest('.cb-group-toggle')) return;
+      const chips = grpDiv.querySelector('.cb-group-chips');
+      const collapsed = chips.classList.toggle('collapsed');
+      arrow.textContent = collapsed ? '▶' : '▼';
+    });
+    grpDiv.appendChild(hdr);
+    const chips = document.createElement('div');
+    chips.className = 'cb-group-chips collapsed';
+    present.forEach(item => {
+      const chip = document.createElement('label');
+      chip.className = 'cb-chip';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = false;
+      cb.value = item;
+      cb.addEventListener('change', (e) => {
+        e.stopPropagation();
+        updateGroupToggleState(grpDiv);
+        updateGroupHighlight(grpDiv);
+        applyFilters();
+      });
+      chip.appendChild(cb);
+      chip.appendChild(document.createTextNode(' ' + item));
+      chips.appendChild(chip);
+    });
+    grpDiv.appendChild(chips);
+    updateGroupHighlight(grpDiv);
+    return grpDiv;
+  }
+
+  groupDefs.forEach(grp => {
+    const present = grp.items.filter(x => allItems.includes(x));
+    if(!present.length) return;
+    present.forEach(x => assigned.add(x));
+    wrap.appendChild(makeGroup(grp.label, present));
+  });
+  const unassigned = allItems.filter(x => !assigned.has(x));
+  if(unassigned.length) wrap.appendChild(makeGroup('未分類', unassigned));
+}
+
+/**
+ * 既存呼び出しとの互換用ラッパー：
+ * type='species' なら SPECIES_GROUPS、'spot' なら SPOT_GROUPS でグループ化する。
+ */
+function buildDDItems(type, values){
+  const groups = (type === 'species') ? SPECIES_GROUPS
+               : (type === 'spot')    ? SPOT_GROUPS
+               : null;
+  if(groups){
+    buildGroupedCBList(`dd-${type}-items`, values, groups);
+  } else {
+    // フォールバック（フラット）
+    document.getElementById(`dd-${type}-items`).innerHTML =
+      values.map(v =>
+        `<label class="dd-item">
+          <input type="checkbox" value="${escHtml(v)}" onchange="applyFilters()">
+          <span>${escHtml(v)}</span>
+        </label>`
+      ).join('');
+  }
+}
+
+/**
+ * グループ式リスト内の絞り込み検索：
+ * chip の textContent でマッチを判定し、ヒットがあるグループは展開、ヒットしないチップは hide。
+ */
 function filterDDItems(type, q){
-  const lq = q.toLowerCase();
-  document.querySelectorAll(`#dd-${type}-items .dd-item`).forEach(item => {
-    item.style.display = item.querySelector('span').textContent.toLowerCase().includes(lq) ? '' : 'none';
+  const lq = (q || '').toLowerCase();
+  const root = document.getElementById(`dd-${type}-items`);
+  if(!root) return;
+  // フラット形式（フォールバック）への後方互換
+  const flatItems = root.querySelectorAll(':scope > .dd-item, :scope .dd-item');
+  if(flatItems.length && !root.querySelector('.cb-group')){
+    flatItems.forEach(item => {
+      const span = item.querySelector('span');
+      const txt = span ? span.textContent.toLowerCase() : '';
+      item.style.display = txt.includes(lq) ? '' : 'none';
+    });
+    return;
+  }
+  // グループ形式
+  root.querySelectorAll('.cb-group').forEach(grp => {
+    let groupHit = false;
+    grp.querySelectorAll('.cb-chip').forEach(chip => {
+      const txt = chip.textContent.toLowerCase();
+      const hit = lq === '' || txt.includes(lq);
+      chip.style.display = hit ? '' : 'none';
+      if(hit) groupHit = true;
+    });
+    grp.style.display = groupHit ? '' : 'none';
+    const chips = grp.querySelector('.cb-group-chips');
+    const arrow = grp.querySelector('.cb-group-arrow');
+    if(chips && arrow){
+      if(lq === ''){
+        // 検索クリア時は折りたたみに戻す
+        chips.classList.add('collapsed');
+        arrow.textContent = '▶';
+      } else if(groupHit){
+        // ヒット時はグループ展開
+        chips.classList.remove('collapsed');
+        arrow.textContent = '▼';
+      }
+    }
   });
 }
 
@@ -444,6 +647,11 @@ function closeAllDD(){
 /** チェックをクリアするだけ（applyFilters は呼ばない） */
 function clearDDSilent(type){
   document.querySelectorAll(`#dd-${type}-items input`).forEach(cb => cb.checked = false);
+  // グループ式リストのトグル状態とハイライトを更新
+  document.querySelectorAll(`#dd-${type}-items .cb-group`).forEach(g => {
+    updateGroupToggleState(g);
+    updateGroupHighlight(g);
+  });
 }
 
 /** チェックをクリアしてフィルターを再適用 */
