@@ -115,6 +115,13 @@ select{background:var(--surface2);border:1px solid var(--border);border-radius:6
 select:focus{border-color:var(--accent);}
 /* ─── サマリーカード ─── */
 .summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-bottom:16px;}
+/* 魚種解析: 複数魚種比較テーブル（フィルター適用中）をコンパスチャート下に全幅表示し、列幅を倍に (2026-05-05) */
+#tab-overview #summary-cards.summary-grid:has(table){display:block;width:100%;margin-top:14px;margin-bottom:14px;}
+#tab-overview #summary-cards table{width:100% !important;table-layout:fixed;font-size:.95rem !important;}
+#tab-overview #summary-cards table th,
+#tab-overview #summary-cards table td{padding:14px 20px !important;text-align:center !important;white-space:nowrap;}
+#tab-overview #summary-cards table th:first-child,
+#tab-overview #summary-cards table td:first-child{text-align:left !important;}
 .sc{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;}
 .sc .sl{font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
 .sc .sv{font-size:1.45rem;font-weight:700;color:var(--accent);}
@@ -370,13 +377,13 @@ html.fs-reveal-private .fs-nav-group-private{display:flex}
       <div class="chart-box"><h3>🌊 流速帯別釣果分布</h3><canvas id="c-cs-bins"></canvas></div>
       <div class="chart-box"><h3>🧭 流れの方向別釣果分布（棒グラフ）</h3><canvas id="c-dir"></canvas></div>
     </div>
-    <div id="summary-bottom-anchor"></div>
     <div class="chart-grid single">
       <div class="chart-box" style="max-height:360px;">
         <h3>🧭 流れの方向別釣果分布（コンパスチャート）<span id="dir-area-label" style="font-size:.72rem;color:var(--text3);margin-left:8px;"></span></h3>
         <canvas id="c-dir-radar" style="max-height:300px;"></canvas>
       </div>
     </div>
+    <div id="summary-bottom-anchor"></div>
     <div class="card" id="db2-panel">
       <div class="card-title">5地点海流プロファイル（釣果日の平均値）</div>
       <div class="pt-grid" id="pt-cards"></div>
@@ -434,10 +441,10 @@ html.fs-reveal-private .fs-nav-group-private{display:flex}
     <button class="btn-goto-settings" onclick="switchTab('settings')">⚙ 設定変更</button>
   </div>
   <div class="ctrl-row">
-    <input type="date" id="tl-date-end" onchange="renderTimeline()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 8px;font-size:.82rem;">
+    <input type="date" id="tl-date-end" onchange="onTimelineRangeChange('tl')" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 8px;font-size:.82rem;">
     <label style="color:var(--text3);">から以前の</label>
     <label style="color:var(--text2);font-size:.78rem;">期間表示：</label>
-    <select id="tl-range-period" onchange="renderTimeline()" style="font-size:.82rem;">
+    <select id="tl-range-period" onchange="onTimelineRangeChange('tl')" style="font-size:.82rem;">
       <option value="1m">1か月</option>
       <option value="3m">3か月</option>
       <option value="6m">6か月</option>
@@ -467,10 +474,10 @@ html.fs-reveal-private .fs-nav-group-private{display:flex}
     <button class="btn-goto-settings" onclick="switchTab('settings')">⚙ 設定変更</button>
   </div>
   <div class="ctrl-row">
-    <input type="date" id="ctl-date-end" onchange="renderCurrentTimeline()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 8px;font-size:.82rem;">
+    <input type="date" id="ctl-date-end" onchange="onTimelineRangeChange('ctl')" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 8px;font-size:.82rem;">
     <label style="color:var(--text3);">から以前の</label>
     <label style="color:var(--text2);font-size:.78rem;">期間表示：</label>
-    <select id="ctl-range-period" onchange="renderCurrentTimeline()" style="font-size:.82rem;">
+    <select id="ctl-range-period" onchange="onTimelineRangeChange('ctl')" style="font-size:.82rem;">
       <option value="1m">1か月</option>
       <option value="3m">3か月</option>
       <option value="6m">6か月</option>
@@ -506,10 +513,10 @@ html.fs-reveal-private .fs-nav-group-private{display:flex}
     <button class="btn-goto-settings" onclick="switchTab('settings')">⚙ 設定変更</button>
   </div>
   <div class="ctrl-row">
-    <input type="date" id="ttl-date-end" onchange="renderTideTimeline()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 8px;font-size:.82rem;">
+    <input type="date" id="ttl-date-end" onchange="onTimelineRangeChange('ttl')" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 8px;font-size:.82rem;">
     <label style="color:var(--text3);">から以前の</label>
     <label style="color:var(--text2);font-size:.78rem;">期間表示：</label>
-    <select id="ttl-range-period" onchange="renderTideTimeline()" style="font-size:.82rem;">
+    <select id="ttl-range-period" onchange="onTimelineRangeChange('ttl')" style="font-size:.82rem;">
       <option value="1m">1か月</option>
       <option value="3m">3か月</option>
       <option value="6m">6か月</option>
@@ -543,10 +550,10 @@ html.fs-reveal-private .fs-nav-group-private{display:flex}
     <button class="btn-goto-settings" onclick="switchTab('settings')">⚙ 設定変更</button>
   </div>
   <div class="ctrl-row">
-    <input type="date" id="mtl-date-end" onchange="renderMoonTimeline()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 8px;font-size:.82rem;">
+    <input type="date" id="mtl-date-end" onchange="onTimelineRangeChange('mtl')" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 8px;font-size:.82rem;">
     <label style="color:var(--text3);">から以前の</label>
     <label style="color:var(--text2);font-size:.78rem;">期間表示：</label>
-    <select id="mtl-range-period" onchange="renderMoonTimeline()" style="font-size:.82rem;">
+    <select id="mtl-range-period" onchange="onTimelineRangeChange('mtl')" style="font-size:.82rem;">
       <option value="1m">1か月</option>
       <option value="3m">3か月</option>
       <option value="6m">6か月</option>
@@ -1358,6 +1365,35 @@ function applyRangePreset(prefix) {
   else if (prefix === 'ctl') renderCurrentTimeline();
   else if (prefix === 'mtl') renderMoonTimeline();
   else if (prefix === 'ttl') renderTideTimeline();
+}
+
+// ── タイムライン4タブ間で「終了日」「期間」を同期するヘルパー (2026-05-05) ──
+const TL_PREFIXES = ['tl','ctl','mtl','ttl'];
+function syncTimelineRange(srcPrefix){
+  const endV    = document.getElementById(srcPrefix + '-date-end')?.value || '';
+  const periodV = document.getElementById(srcPrefix + '-range-period')?.value || '';
+  TL_PREFIXES.forEach(p => {
+    if (p === srcPrefix) return;
+    const e = document.getElementById(p + '-date-end');    if (e) e.value = endV;
+    const r = document.getElementById(p + '-range-period'); if (r && periodV) r.value = periodV;
+  });
+}
+function renderTimelineByPrefix(p){
+  try {
+    if (p === 'tl')  renderTimeline();
+    else if (p === 'ctl') renderCurrentTimeline();
+    else if (p === 'mtl') renderMoonTimeline();
+    else if (p === 'ttl') renderTideTimeline();
+  } catch(e){ console.warn('renderTimelineByPrefix', p, e); }
+}
+function renderAllTimelinesExcept(except){
+  TL_PREFIXES.forEach(p => { if (p !== except) renderTimelineByPrefix(p); });
+}
+// 日付/期間入力 onchange から呼ぶ統合ハンドラ: 自タブ即時描画 + 他タブも同期描画
+function onTimelineRangeChange(srcPrefix){
+  syncTimelineRange(srcPrefix);
+  renderTimelineByPrefix(srcPrefix);
+  renderAllTimelinesExcept(srcPrefix);
 }
 
 function getSettingsSpeciesFilter() {
