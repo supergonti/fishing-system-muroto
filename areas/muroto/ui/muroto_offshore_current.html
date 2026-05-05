@@ -274,22 +274,19 @@ html.fs-reveal-private .fs-nav-group-private{display:flex}
           <button class="tab-btn btn-pill" role="tab" data-point="東" onclick="selectPoint(this)" aria-selected="false">東</button>
           <button class="tab-btn btn-pill" role="tab" data-point="北東" onclick="selectPoint(this)" aria-selected="false">北東</button>
         </div>
-        <div class="period-row" role="group" aria-label="表示期間の選択">
-          <label>表示期間：</label>
-          <button class="period-btn btn-pill" data-days="7" onclick="selectPeriod(this)">直近7日</button>
-          <button class="period-btn btn-pill" data-days="14" onclick="selectPeriod(this)">直近14日</button>
-          <button class="period-btn btn-pill active" data-days="30" onclick="selectPeriod(this)">直近30日</button>
-          <button class="period-btn btn-pill" data-days="90" onclick="selectPeriod(this)">直近90日</button>
-          <button class="period-btn btn-pill" data-days="365" onclick="selectPeriod(this)">直近365日</button>
-          <button class="period-btn btn-pill" data-days="9999" onclick="selectPeriod(this)">全期間</button>
-        </div>
-        <div class="custom-range-row">
-          <label for="rangeStart">期間指定：</label>
-          <input type="date" id="rangeStart" class="date-input" aria-label="開始日">
-          <span style="color:#666;font-size:.82rem">〜</span>
-          <input type="date" id="rangeEnd" class="date-input" aria-label="終了日">
-          <button class="period-btn btn-pill" onclick="applyCustomRange()">適用</button>
-          <button class="reset-btn" id="resetRangeBtn" style="display:none" onclick="clearCustomRange()">✕ リセット</button>
+        <div class="custom-range-row" role="group" aria-label="期間指定">
+          <input type="date" id="rangeEnd" class="date-input" aria-label="終了日" onchange="onRangeChange()">
+          <label style="color:#666;font-size:.82rem">から以前の</label>
+          <label for="rangePeriod">期間表示：</label>
+          <select id="rangePeriod" class="date-input" onchange="onRangeChange()">
+            <option value="1m">1か月</option>
+            <option value="3m">3か月</option>
+            <option value="6m">6か月</option>
+            <option value="1y" selected>1年</option>
+            <option value="2y">2年</option>
+            <option value="3y">3年</option>
+            <option value="4y">4年</option>
+          </select>
         </div>
 
         <div class="charts-area">
@@ -365,9 +362,9 @@ html.fs-reveal-private .fs-nav-group-private{display:flex}
 // =====================================================
 let allData = [];
 let currentPoint = '室戸沖';
-let currentDays  = 30;
-let customStartDate = null;
-let customEndDate   = null;
+// 2026-05-05: 「[終了日] から以前の 期間表示: [select]」方式に変更（旧 currentDays/customStart/customEnd を撤去）
+let currentEndDate = '';   // yyyy-mm-dd（空なら今日 / または最新データ日付）
+let currentPeriod  = '1y'; // 1m/3m/6m/1y/2y/3y/4y
 let chartSpeedInst    = null;
 let chartSalinityInst = null;
 let _cachedDates = null;        // uniqDates キャッシュ
@@ -395,9 +392,8 @@ document.addEventListener('DOMContentLoaded', () => {
     missingStatusSub: document.getElementById('missingStatusSub'),
     latestSpeed:   document.getElementById('latestSpeed'),
     latestSpeedSub:document.getElementById('latestSpeedSub'),
-    rangeStart:    document.getElementById('rangeStart'),
     rangeEnd:      document.getElementById('rangeEnd'),
-    resetRangeBtn: document.getElementById('resetRangeBtn'),
+    rangePeriod:   document.getElementById('rangePeriod'),
     chartLabel1:   document.getElementById('chartLabel1'),
     chartLabel2:   document.getElementById('chartLabel2'),
     chartSpeed:    document.getElementById('chartSpeed'),
@@ -510,9 +506,15 @@ function parseCSV(text, label) {
   $.headerStatus.textContent = `最終取得: ${dates[dates.length - 1]}`;
   $.content.style.display    = 'block';
 
-  if ($.rangeStart && dates.length > 0) {
-    $.rangeStart.min = $.rangeEnd.min = dates[0];
-    $.rangeStart.max = $.rangeEnd.max = dates[dates.length - 1];
+  if ($.rangeEnd && dates.length > 0) {
+    // 2026-05-05: 終了日 input の min/max をデータ範囲に揃え、初期値はデータ最終日
+    $.rangeEnd.min = dates[0];
+    $.rangeEnd.max = dates[dates.length - 1];
+    if (!$.rangeEnd.value) {
+      $.rangeEnd.value = dates[dates.length - 1];
+      currentEndDate   = dates[dates.length - 1];
+    }
+    if ($.rangePeriod && !currentPeriod) currentPeriod = $.rangePeriod.value || '1y';
   }
 
   try { buildDashboard(); }      catch(e) { console.error('dashboard:', e); }
@@ -569,41 +571,40 @@ function selectPoint(btn) {
   currentPoint = btn.dataset.point;
   refreshViewer();
 }
-function selectPeriod(btn) {
-  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  currentDays = parseInt(btn.dataset.days);
-  customStartDate = customEndDate = null;
-  $.resetRangeBtn.style.display = 'none';
-  refreshViewer();
+// ── 2026-05-05: 「[終了日] から以前の 期間表示: [select]」方式 ──
+const PERIOD_TO_MONTHS = {'1m':1,'3m':3,'6m':6,'1y':12,'2y':24,'3y':36,'4y':48};
+const PERIOD_TO_DAYS   = {'1m':30,'3m':90,'6m':180,'1y':365,'2y':730,'3y':1095,'4y':1460};
+const PERIOD_TO_LABEL  = {'1m':'1ヶ月','3m':'3ヶ月','6m':'6ヶ月','1y':'1年','2y':'2年','3y':'3年','4y':'4年'};
+function periodToMonths(p){ return PERIOD_TO_MONTHS[p] || 12; }
+function periodToDays(p){   return PERIOD_TO_DAYS[p]   || 365; }
+function periodToLabel(p){  return PERIOD_TO_LABEL[p]  || '1年'; }
+
+// 終了日 + 期間 から start/end を算出（タイムゾーンずれを避けるため文字列演算）
+function getDateRange() {
+  // 終了日: input 値 → 無ければ今日
+  let endStr = (currentEndDate || '').trim();
+  if (!endStr) endStr = new Date().toISOString().slice(0,10);
+  // 起点: 終了日から months 引く
+  const months = periodToMonths(currentPeriod);
+  const [y,m,d] = endStr.split('-').map(Number);
+  const startD = new Date(y, m-1, d);
+  startD.setMonth(startD.getMonth() - months);
+  const startStr = startD.toISOString().slice(0,10);
+  return { startStr, endStr, days: periodToDays(currentPeriod) };
 }
-function applyCustomRange() {
-  const s = $.rangeStart.value, e = $.rangeEnd.value;
-  if (!s || !e) { alert('開始日と終了日を両方指定してください'); return; }
-  if (s > e)    { alert('開始日は終了日より前にしてください'); return; }
-  customStartDate = s;
-  customEndDate   = e;
-  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-  $.resetRangeBtn.style.display = 'inline-block';
-  refreshViewer();
-}
-function clearCustomRange() {
-  customStartDate = customEndDate = null;
-  $.resetRangeBtn.style.display = 'none';
-  const def = document.querySelector('.period-btn[data-days="30"]');
-  if (def) { def.classList.add('active'); currentDays = 30; }
+
+// 終了日 / 期間 input 変更時のハンドラ
+function onRangeChange(){
+  if ($.rangeEnd)    currentEndDate = $.rangeEnd.value;
+  if ($.rangePeriod) currentPeriod  = $.rangePeriod.value;
   refreshViewer();
 }
 
 function getFiltered() {
-  if (customStartDate && customEndDate) {
-    return allData
-      .filter(r => r.point === currentPoint && r.date >= customStartDate && r.date <= customEndDate)
-      .sort((a, b) => b.date.localeCompare(a.date));
-  }
-  const show = new Set(uniqDates().slice(-currentDays));
+  // 2026-05-05: 終了日 + 期間 から算出したカレンダー範囲でフィルタ
+  const { startStr, endStr } = getDateRange();
   return allData
-    .filter(r => r.point === currentPoint && show.has(r.date))
+    .filter(r => r.point === currentPoint && r.date >= startStr && r.date <= endStr)
     .sort((a, b) => b.date.localeCompare(a.date));
 }
 
@@ -695,13 +696,13 @@ function renderSpeedChart() {
   const labels = rows.map(r => (r.date || '').slice(5).replace('-', '/'));
   const spd    = rows.map(r => isNaN(r.speed_kn) ? null : +r.speed_kn.toFixed(3));
   const tmp    = rows.map(r => isNaN(r.temp_c) ? null : r.temp_c);
-  const d = currentDays;
+  const d = periodToDays(currentPeriod);
   const arrowCvS = d <= 7 ? 40 : d <= 14 ? 36 : d <= 30 ? 30 : 24;
   const arrowR   = d <= 7 ? 12 : d <= 14 ? 11 : d <= 30 ? 9 : 6;
   const arrowPts = rows.map(r => getArrowCanvas(isNaN(r.direction) ? 0 : r.direction, arrowCvS));
   const tmpR = d <= 30 ? 2 : 1;
 
-  $.chartLabel1.textContent = `【${currentPoint}点】直近${d}日　流速（kn）・水温（℃）`;
+  $.chartLabel1.textContent = `【${currentPoint}点】過去${periodToLabel(currentPeriod)}　流速（kn）・水温（℃）`;
   const ctx = $.chartSpeed.getContext('2d');
   if (chartSpeedInst) chartSpeedInst.destroy();
   chartSpeedInst = new Chart(ctx, {
@@ -741,9 +742,9 @@ function renderSalinityChart() {
   const rows   = fillDateGaps(getFiltered().slice().reverse());
   const labels = rows.map(r => (r.date || '').slice(5).replace('-', '/'));
   const sal    = rows.map(r => isNaN(r.salinity) ? null : r.salinity);
-  const salR   = currentDays <= 30 ? 2 : 1;
+  const salR   = periodToDays(currentPeriod) <= 30 ? 2 : 1;
 
-  $.chartLabel2.textContent = `【${currentPoint}点】直近${currentDays}日　塩分濃度（psu）`;
+  $.chartLabel2.textContent = `【${currentPoint}点】過去${periodToLabel(currentPeriod)}　塩分濃度（psu）`;
   const ctx = $.chartSalinity.getContext('2d');
   if (chartSalinityInst) chartSalinityInst.destroy();
   chartSalinityInst = new Chart(ctx, {
