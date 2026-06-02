@@ -1,9 +1,9 @@
 {
   "version": "2.1",
-  "generated_at": "2026-06-01 23:13",
+  "generated_at": "2026-06-02 23:14",
   "db_info": {
     "db1_records": 1,
-    "db2_records": 7975,
+    "db2_records": 7980,
     "db3_records": 12568,
     "db3_date_range": {
       "first": "2022-01-01",
@@ -26471,51 +26471,51 @@
       "year": 2026,
       "month": 6,
       "point": "北東",
-      "avg_speed_kn": 1.39,
-      "avg_temp_c": 24.57,
-      "avg_salinity": 34.18,
-      "avg_direction": 80.7,
-      "days": 1
+      "avg_speed_kn": 1.41,
+      "avg_temp_c": 24.5,
+      "avg_salinity": 34.17,
+      "avg_direction": 80.0,
+      "days": 2
     },
     {
       "year": 2026,
       "month": 6,
       "point": "北西",
-      "avg_speed_kn": 1.74,
-      "avg_temp_c": 24.71,
-      "avg_salinity": 34.28,
-      "avg_direction": 86.2,
-      "days": 1
+      "avg_speed_kn": 1.64,
+      "avg_temp_c": 24.6,
+      "avg_salinity": 34.25,
+      "avg_direction": 83.55,
+      "days": 2
     },
     {
       "year": 2026,
       "month": 6,
       "point": "室戸沖",
-      "avg_speed_kn": 3.18,
-      "avg_temp_c": 25.85,
-      "avg_salinity": 34.34,
-      "avg_direction": 67.0,
-      "days": 1
+      "avg_speed_kn": 3.13,
+      "avg_temp_c": 25.75,
+      "avg_salinity": 34.33,
+      "avg_direction": 67.05,
+      "days": 2
     },
     {
       "year": 2026,
       "month": 6,
       "point": "東",
-      "avg_speed_kn": 3.14,
-      "avg_temp_c": 25.98,
-      "avg_salinity": 34.36,
-      "avg_direction": 67.2,
-      "days": 1
+      "avg_speed_kn": 3.1,
+      "avg_temp_c": 25.85,
+      "avg_salinity": 34.35,
+      "avg_direction": 67.25,
+      "days": 2
     },
     {
       "year": 2026,
       "month": 6,
       "point": "西",
-      "avg_speed_kn": 2.97,
-      "avg_temp_c": 25.7,
-      "avg_salinity": 34.33,
-      "avg_direction": 65.2,
-      "days": 1
+      "avg_speed_kn": 2.91,
+      "avg_temp_c": 25.62,
+      "avg_salinity": 34.31,
+      "avg_direction": 65.4,
+      "days": 2
     }
   ],
   "records": [
