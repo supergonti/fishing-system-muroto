@@ -1,9 +1,9 @@
 {
   "version": "2.1",
-  "generated_at": "2026-06-18 07:43",
+  "generated_at": "2026-06-18 09:16",
   "db_info": {
     "db1_records": 1,
-    "db2_records": 8045,
+    "db2_records": 8050,
     "db3_records": 12568,
     "db3_date_range": {
       "first": "2022-01-01",
@@ -23698,10 +23698,10 @@
       "水温7日MA": 19.23,
       "水温トレンド": "上昇",
       "水温前日差": 0.8,
-      "流速kn": null,
-      "流向": null,
-      "流速7日MA": null,
-      "流速トレンド": null,
+      "流速kn": 2.83,
+      "流向": 60.0,
+      "流速7日MA": 0.86,
+      "流速トレンド": "流速増加",
       "月齢": 25.5,
       "月相": "二十六夜",
       "釣果": [],
@@ -23730,7 +23730,7 @@
       "水温前日差": 0.3,
       "流速kn": 1.94,
       "流向": 63.9,
-      "流速7日MA": 0.73,
+      "流速7日MA": 1.08,
       "流速トレンド": "流速増加",
       "月齢": 27.5,
       "月相": "二十六夜",
@@ -26371,51 +26371,51 @@
       "year": 2026,
       "month": 4,
       "point": "北東",
-      "avg_speed_kn": 0.73,
-      "avg_temp_c": 19.49,
+      "avg_speed_kn": 0.72,
+      "avg_temp_c": 19.56,
       "avg_salinity": 34.52,
-      "avg_direction": 66.98,
-      "days": 14
+      "avg_direction": 67.11,
+      "days": 15
     },
     {
       "year": 2026,
       "month": 4,
       "point": "北西",
-      "avg_speed_kn": 0.31,
-      "avg_temp_c": 19.15,
+      "avg_speed_kn": 0.32,
+      "avg_temp_c": 19.23,
       "avg_salinity": 34.51,
-      "avg_direction": 75.61,
-      "days": 14
+      "avg_direction": 92.49,
+      "days": 15
     },
     {
       "year": 2026,
       "month": 4,
       "point": "室戸沖",
-      "avg_speed_kn": 1.09,
-      "avg_temp_c": 19.9,
+      "avg_speed_kn": 1.21,
+      "avg_temp_c": 20.04,
       "avg_salinity": 34.53,
-      "avg_direction": 71.53,
-      "days": 14
+      "avg_direction": 70.76,
+      "days": 15
     },
     {
       "year": 2026,
       "month": 4,
       "point": "東",
-      "avg_speed_kn": 1.74,
-      "avg_temp_c": 20.4,
+      "avg_speed_kn": 1.83,
+      "avg_temp_c": 20.55,
       "avg_salinity": 34.54,
-      "avg_direction": 64.85,
-      "days": 14
+      "avg_direction": 64.58,
+      "days": 15
     },
     {
       "year": 2026,
       "month": 4,
       "point": "西",
-      "avg_speed_kn": 0.95,
-      "avg_temp_c": 19.79,
+      "avg_speed_kn": 1.05,
+      "avg_temp_c": 19.9,
       "avg_salinity": 34.53,
-      "avg_direction": 75.76,
-      "days": 14
+      "avg_direction": 74.59,
+      "days": 15
     },
     {
       "year": 2026,
