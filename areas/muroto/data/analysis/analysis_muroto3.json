@@ -1,9 +1,9 @@
 {
   "version": "2.1",
-  "generated_at": "2026-06-18 09:19",
+  "generated_at": "2026-06-18 10:32",
   "db_info": {
     "db1_records": 1,
-    "db2_records": 8055,
+    "db2_records": 8060,
     "db3_records": 12568,
     "db3_date_range": {
       "first": "2022-01-01",
@@ -23758,10 +23758,10 @@
       "水温7日MA": 20.62,
       "水温トレンド": "急上昇",
       "水温前日差": 0.2,
-      "流速kn": null,
-      "流向": null,
-      "流速7日MA": null,
-      "流速トレンド": null,
+      "流速kn": 2.18,
+      "流向": 44.8,
+      "流速7日MA": 1.71,
+      "流速トレンド": "流速増加",
       "月齢": 29.5,
       "月相": "晦日",
       "釣果": [],
@@ -26372,50 +26372,50 @@
       "month": 4,
       "point": "北東",
       "avg_speed_kn": 0.74,
-      "avg_temp_c": 19.65,
+      "avg_temp_c": 19.77,
       "avg_salinity": 34.52,
-      "avg_direction": 67.53,
-      "days": 16
+      "avg_direction": 66.42,
+      "days": 17
     },
     {
       "year": 2026,
       "month": 4,
       "point": "北西",
-      "avg_speed_kn": 0.34,
-      "avg_temp_c": 19.32,
+      "avg_speed_kn": 0.37,
+      "avg_temp_c": 19.45,
       "avg_salinity": 34.51,
-      "avg_direction": 89.17,
-      "days": 16
+      "avg_direction": 102.56,
+      "days": 17
     },
     {
       "year": 2026,
       "month": 4,
       "point": "室戸沖",
-      "avg_speed_kn": 1.28,
-      "avg_temp_c": 20.24,
-      "avg_salinity": 34.54,
-      "avg_direction": 70.14,
-      "days": 16
+      "avg_speed_kn": 1.33,
+      "avg_temp_c": 20.32,
+      "avg_salinity": 34.53,
+      "avg_direction": 68.65,
+      "days": 17
     },
     {
       "year": 2026,
       "month": 4,
       "point": "東",
-      "avg_speed_kn": 1.86,
-      "avg_temp_c": 20.72,
+      "avg_speed_kn": 1.9,
+      "avg_temp_c": 20.8,
       "avg_salinity": 34.54,
-      "avg_direction": 64.41,
-      "days": 16
+      "avg_direction": 63.61,
+      "days": 17
     },
     {
       "year": 2026,
       "month": 4,
       "point": "西",
-      "avg_speed_kn": 1.12,
-      "avg_temp_c": 20.09,
+      "avg_speed_kn": 1.15,
+      "avg_temp_c": 20.15,
       "avg_salinity": 34.53,
-      "avg_direction": 73.56,
-      "days": 16
+      "avg_direction": 71.29,
+      "days": 17
     },
     {
       "year": 2026,
