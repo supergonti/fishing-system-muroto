@@ -1,9 +1,9 @@
 {
   "version": "2.1",
-  "generated_at": "2026-06-18 23:15",
+  "generated_at": "2026-06-20 22:40",
   "db_info": {
     "db1_records": 858,
-    "db2_records": 8065,
+    "db2_records": 8070,
     "db3_records": 12568,
     "db3_date_range": {
       "first": "2022-01-01",
@@ -71958,51 +71958,51 @@
       "year": 2026,
       "month": 6,
       "point": "北東",
-      "avg_speed_kn": 0.93,
-      "avg_temp_c": 24.49,
-      "avg_salinity": 34.01,
-      "avg_direction": 81.16,
-      "days": 16
+      "avg_speed_kn": 0.92,
+      "avg_temp_c": 24.5,
+      "avg_salinity": 34.0,
+      "avg_direction": 81.52,
+      "days": 17
     },
     {
       "year": 2026,
       "month": 6,
       "point": "北西",
-      "avg_speed_kn": 1.49,
-      "avg_temp_c": 24.62,
-      "avg_salinity": 34.07,
-      "avg_direction": 104.74,
-      "days": 16
+      "avg_speed_kn": 1.45,
+      "avg_temp_c": 24.64,
+      "avg_salinity": 34.06,
+      "avg_direction": 105.02,
+      "days": 17
     },
     {
       "year": 2026,
       "month": 6,
       "point": "室戸沖",
-      "avg_speed_kn": 2.25,
-      "avg_temp_c": 25.37,
-      "avg_salinity": 34.17,
-      "avg_direction": 71.88,
-      "days": 16
+      "avg_speed_kn": 2.23,
+      "avg_temp_c": 25.33,
+      "avg_salinity": 34.14,
+      "avg_direction": 72.26,
+      "days": 17
     },
     {
       "year": 2026,
       "month": 6,
       "point": "東",
-      "avg_speed_kn": 2.32,
-      "avg_temp_c": 25.47,
-      "avg_salinity": 34.19,
-      "avg_direction": 70.86,
-      "days": 16
+      "avg_speed_kn": 2.31,
+      "avg_temp_c": 25.42,
+      "avg_salinity": 34.16,
+      "avg_direction": 71.19,
+      "days": 17
     },
     {
       "year": 2026,
       "month": 6,
       "point": "西",
-      "avg_speed_kn": 2.1,
-      "avg_temp_c": 25.28,
-      "avg_salinity": 34.16,
-      "avg_direction": 71.66,
-      "days": 16
+      "avg_speed_kn": 2.08,
+      "avg_temp_c": 25.24,
+      "avg_salinity": 34.13,
+      "avg_direction": 72.11,
+      "days": 17
     }
   ],
   "records": [
