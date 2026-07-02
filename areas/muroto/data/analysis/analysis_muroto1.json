@@ -1,9 +1,9 @@
 {
   "version": "2.1",
-  "generated_at": "2026-07-01 22:45",
+  "generated_at": "2026-07-02 22:35",
   "db_info": {
     "db1_records": 858,
-    "db2_records": 8120,
+    "db2_records": 8125,
     "db3_records": 12568,
     "db3_date_range": {
       "first": "2022-01-01",
@@ -72008,51 +72008,51 @@
       "year": 2026,
       "month": 7,
       "point": "北東",
-      "avg_speed_kn": 1.97,
-      "avg_temp_c": 25.51,
-      "avg_salinity": 33.26,
-      "avg_direction": 85.3,
-      "days": 1
+      "avg_speed_kn": 1.73,
+      "avg_temp_c": 25.57,
+      "avg_salinity": 33.45,
+      "avg_direction": 81.8,
+      "days": 2
     },
     {
       "year": 2026,
       "month": 7,
       "point": "北西",
-      "avg_speed_kn": 2.92,
-      "avg_temp_c": 25.8,
-      "avg_salinity": 33.35,
-      "avg_direction": 101.1,
-      "days": 1
+      "avg_speed_kn": 2.24,
+      "avg_temp_c": 25.73,
+      "avg_salinity": 33.46,
+      "avg_direction": 101.2,
+      "days": 2
     },
     {
       "year": 2026,
       "month": 7,
       "point": "室戸沖",
-      "avg_speed_kn": 3.21,
-      "avg_temp_c": 26.76,
-      "avg_salinity": 33.9,
-      "avg_direction": 76.2,
-      "days": 1
+      "avg_speed_kn": 2.64,
+      "avg_temp_c": 26.55,
+      "avg_salinity": 33.92,
+      "avg_direction": 74.7,
+      "days": 2
     },
     {
       "year": 2026,
       "month": 7,
       "point": "東",
-      "avg_speed_kn": 3.09,
-      "avg_temp_c": 26.89,
-      "avg_salinity": 33.94,
-      "avg_direction": 75.4,
-      "days": 1
+      "avg_speed_kn": 2.64,
+      "avg_temp_c": 26.66,
+      "avg_salinity": 33.95,
+      "avg_direction": 74.1,
+      "days": 2
     },
     {
       "year": 2026,
       "month": 7,
       "point": "西",
-      "avg_speed_kn": 3.1,
-      "avg_temp_c": 26.65,
-      "avg_salinity": 33.88,
-      "avg_direction": 76.4,
-      "days": 1
+      "avg_speed_kn": 2.5,
+      "avg_temp_c": 26.45,
+      "avg_salinity": 33.89,
+      "avg_direction": 74.8,
+      "days": 2
     }
   ],
   "records": [
