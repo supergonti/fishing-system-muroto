@@ -1,9 +1,9 @@
 {
   "version": "2.1",
-  "generated_at": "2026-07-21 22:25",
+  "generated_at": "2026-07-22 22:32",
   "db_info": {
     "db1_records": 860,
-    "db2_records": 8210,
+    "db2_records": 8215,
     "db3_records": 12568,
     "db3_date_range": {
       "first": "2022-01-01",
@@ -72014,51 +72014,51 @@
       "year": 2026,
       "month": 7,
       "point": "北東",
-      "avg_speed_kn": 0.94,
-      "avg_temp_c": 27.76,
+      "avg_speed_kn": 0.95,
+      "avg_temp_c": 27.87,
       "avg_salinity": 33.42,
-      "avg_direction": 83.21,
-      "days": 19
+      "avg_direction": 82.95,
+      "days": 20
     },
     {
       "year": 2026,
       "month": 7,
       "point": "北西",
       "avg_speed_kn": 0.82,
-      "avg_temp_c": 27.91,
+      "avg_temp_c": 28.02,
       "avg_salinity": 33.47,
-      "avg_direction": 111.96,
-      "days": 19
+      "avg_direction": 110.62,
+      "days": 20
     },
     {
       "year": 2026,
       "month": 7,
       "point": "室戸沖",
-      "avg_speed_kn": 1.96,
-      "avg_temp_c": 28.14,
-      "avg_salinity": 33.79,
-      "avg_direction": 67.99,
-      "days": 19
+      "avg_speed_kn": 1.99,
+      "avg_temp_c": 28.24,
+      "avg_salinity": 33.78,
+      "avg_direction": 68.14,
+      "days": 20
     },
     {
       "year": 2026,
       "month": 7,
       "point": "東",
-      "avg_speed_kn": 2.16,
-      "avg_temp_c": 28.22,
-      "avg_salinity": 33.83,
-      "avg_direction": 67.68,
-      "days": 19
+      "avg_speed_kn": 2.19,
+      "avg_temp_c": 28.32,
+      "avg_salinity": 33.82,
+      "avg_direction": 67.9,
+      "days": 20
     },
     {
       "year": 2026,
       "month": 7,
       "point": "西",
-      "avg_speed_kn": 1.75,
-      "avg_temp_c": 28.06,
-      "avg_salinity": 33.75,
-      "avg_direction": 67.99,
-      "days": 19
+      "avg_speed_kn": 1.78,
+      "avg_temp_c": 28.16,
+      "avg_salinity": 33.74,
+      "avg_direction": 68.04,
+      "days": 20
     }
   ],
   "records": [
