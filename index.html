@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>室戸沖 海流・出船判断</title>
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<style>
+:root{color-scheme:light;--navy:#173958;--muted:#576879}*{box-sizing:border-box}
+body{margin:0;background:#f4f7fa;color:var(--navy);font:16px/1.7 system-ui,-apple-system,"Hiragino Sans","Meiryo",sans-serif}
+header{background:var(--navy);color:white;padding:36px 24px}header div,main{max-width:900px;margin:auto}
+h1{font-size:clamp(1.6rem,4vw,2.25rem);margin:0 0 8px}header p{margin:0;color:#d6e7f2}
+main{padding:32px 24px}.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.card{display:block;padding:28px;background:white;border:1px solid #cddce8;border-radius:14px;color:inherit;text-decoration:none;box-shadow:0 3px 14px #17395809}
+.card:hover{border-color:#197da3;background:#fafdff}.card:focus-visible{outline:3px solid #1689bd;outline-offset:4px}
+.card h2{font-size:1.4rem;margin:0 0 12px}.card p{color:var(--muted);margin:0 0 24px}.action{font-weight:700;color:#08789d}
+.note{margin:26px 0 0;color:var(--muted);font-size:.95rem}footer{padding:24px;text-align:center;font-size:.85rem}footer a{color:#34637d}
+@media(max-width:600px){header{padding:26px 20px}main{padding:24px 18px}.cards{grid-template-columns:1fr}.card{padding:24px}}
+</style>
+</head>
+<body>
+<header><div><h1>室戸沖 海流・出船判断</h1><p>海の状態を確認する、2つの入口。</p></div></header>
+<main>
+<nav class="cards" aria-label="海流・出船判断のメニュー">
+<a class="card" href="./areas/muroto/ui/muroto_offshore_current.html"><h2>🌊 海流情報</h2><p>室戸沖の5地点について、流速・流向・水温・塩分を確認できます。</p><span class="action">海流ダッシュボードを開く →</span></a>
+<a class="card" href="./areas/muroto/ui/muroto_fishingforecast.html"><h2>⛵ 出船判断</h2><p>5日先までの波・風・雨の予報と、設定した基準による判断を確認できます。</p><span class="action">出船判断を開く →</span></a>
+</nav>
+<p class="note">海流は前日分を毎日取得。出船判断用の予報も自動更新します。各画面のデータ日付・更新時刻をご確認ください。</p>
+</main>
+<footer><a href="./catch/index.html">釣果情報アーカイブ</a></footer>
+</body>
+</html>

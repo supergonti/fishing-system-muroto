@@ -97,19 +97,12 @@ td{padding:7px 8px;color:#1a1a2e;vertical-align:middle}
 </head>
 <body data-fs-page="muroto_forecast">
 <!-- fishing-system 共通ナビ v2 (2グループ化) -->
-<nav class="fs-nav">
-  <div class="fs-nav-group fs-nav-group-private" data-group="private">
-    <span class="fs-nav-label">釣果収集系</span>
-    <a href="./collector.html"               data-fs="collector">釣果収集</a>
-    <a href="./condition.html"               data-fs="condition">条件分析</a>
-  </div>
-  <div class="fs-nav-group fs-nav-group-shared" data-group="shared">
-    <span class="fs-nav-label">公開系</span>
-    <a href="../../../viewer.html" data-fs="viewer" onclick="this.href='../../../viewer.html'+(location.search||'')">🎣 遊漁船情報</a>
-    <a href="./fishingdata.html"             data-fs="fishingdata">釣果DB</a>
-    <a href="./muroto_fishing_analysis.html" data-fs="muroto_analysis">解析DB</a>
-    <a href="./muroto_offshore_current.html" data-fs="muroto_current">潮流DB</a>
-    <a href="./muroto_fishingforecast.html"  data-fs="muroto_forecast">出船判断</a>
+<nav class="fs-nav" aria-label="海流・出船判断">
+  <div class="fs-nav-group fs-nav-group-shared">
+    <span class="fs-nav-label">海流・出船判断</span>
+    <a href="../../../ocean/index.html">入口に戻る</a>
+    <a href="./muroto_offshore_current.html" data-fs="muroto_current">海流情報</a>
+    <a href="./muroto_fishingforecast.html" data-fs="muroto_forecast">出船判断</a>
   </div>
 </nav>
 <style>
