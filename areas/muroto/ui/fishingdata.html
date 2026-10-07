@@ -157,19 +157,12 @@ td.env-td{background:var(--env-bg);color:#0a4a57;}
 </head>
 <body data-fs-page="fishingdata">
 <!-- fishing-system 共通ナビ v2 (2グループ化) -->
-<nav class="fs-nav">
-  <div class="fs-nav-group fs-nav-group-private" data-group="private">
-    <span class="fs-nav-label">釣果収集系</span>
-    <a href="./collector.html"               data-fs="collector">釣果収集</a>
-    <a href="./condition.html"               data-fs="condition">条件分析</a>
-  </div>
-  <div class="fs-nav-group fs-nav-group-shared" data-group="shared">
-    <span class="fs-nav-label">公開系</span>
-    <a href="../../../viewer.html" data-fs="viewer" onclick="this.href='../../../viewer.html'+(location.search||'')">🎣 遊漁船情報</a>
-    <a href="./fishingdata.html"             data-fs="fishingdata">釣果DB</a>
-    <a href="./muroto_fishing_analysis.html" data-fs="muroto_analysis">解析DB</a>
-    <a href="./muroto_offshore_current.html" data-fs="muroto_current">潮流DB</a>
-    <a href="./muroto_fishingforecast.html"  data-fs="muroto_forecast">出船判断</a>
+<nav class="fs-nav" aria-label="釣果情報アーカイブ">
+  <div class="fs-nav-group fs-nav-group-shared">
+    <span class="fs-nav-label">釣果情報アーカイブ</span>
+    <a href="../../../catch/index.html" data-fs="viewer" onclick="this.href='../../../catch/index.html'+(location.search||'')">釣果情報の入口</a>
+    <a href="./fishingdata.html" data-fs="fishingdata" onclick="this.href='./fishingdata.html'+(location.search||'')">釣果DB</a>
+    <a href="./muroto_fishing_analysis.html" data-fs="muroto_analysis" onclick="this.href='./muroto_fishing_analysis.html'+(location.search||'')">解析DB</a>
   </div>
 </nav>
 <style>

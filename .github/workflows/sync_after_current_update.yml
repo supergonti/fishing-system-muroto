@@ -46,13 +46,14 @@ concurrency:
 
 jobs:
   sync:
+    # 2026-10-07: 釣果は閲覧専用。新規取り込み・派生データ再生成を停止。
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: write
     # workflow_run イベントは upstream 失敗時もトリガーされるため、成功時のみ継続。
     # 他のトリガー（push/workflow_dispatch）は常に実行する。
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: リポジトリをチェックアウト

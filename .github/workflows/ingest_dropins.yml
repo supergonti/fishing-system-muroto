@@ -32,6 +32,8 @@ concurrency:
 
 jobs:
   ingest:
+    # 2026-10-07: 釣果は閲覧専用。新規取り込み・派生データ再生成を停止。
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
